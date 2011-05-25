@@ -1,0 +1,16 @@
+
+GpusDoneRight is free software, see file LICENSE.
+
+GpusDoneRight is a collection of C++ classes (in .h files)
+to simplify the programming of GPUs.
+We are using the low-level driver API, so that the
+code is standard C++ without ``decorations.''
+We are using the CUDA driver API, although other APIs might
+be added in the future. 
+GPU kernels go in a separate .cu file; they are usually
+compiled using nvcc into a .ptx file.
+
+Quick Start.
+cd drivers/
+to be written...
+  

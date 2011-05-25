@@ -1,0 +1,40 @@
+cudaSuccess     No errors.
+		cudaErrorMissingConfiguration   Missing configuration error.
+		cudaErrorMemoryAllocation       Memory allocation error.
+		cudaErrorInitializationError    Initialization error.
+		cudaErrorLaunchFailure  Launch failure.
+		cudaErrorPriorLaunchFailure     Prior launch failure.
+		cudaErrorLaunchTimeout  Launch timeout error.
+		cudaErrorLaunchOutOfResources   Launch out of resources error.
+		cudaErrorInvalidDeviceFunction  Invalid device function.
+		cudaErrorInvalidConfiguration   Invalid configuration.
+		cudaErrorInvalidDevice  Invalid device.
+		cudaErrorInvalidValue   Invalid value.
+		cudaErrorInvalidPitchValue      Invalid pitch value.
+		cudaErrorInvalidSymbol  Invalid symbol.
+		cudaErrorMapBufferObjectFailed  Map buffer object failed.
+		cudaErrorUnmapBufferObjectFailed        Unmap buffer object failed.
+		cudaErrorInvalidHostPointer     Invalid host pointer.
+		cudaErrorInvalidDevicePointer   Invalid device pointer.
+		cudaErrorInvalidTexture         Invalid texture.
+		cudaErrorInvalidTextureBinding  Invalid texture binding.
+		cudaErrorInvalidChannelDescriptor       Invalid channel descriptor.
+		cudaErrorInvalidMemcpyDirection         Invalid memcpy direction.
+		cudaErrorAddressOfConstant      Address of constant error.
+		cudaErrorTextureFetchFailed     Texture fetch failed.
+		cudaErrorTextureNotBound        Texture not bound error.
+		cudaErrorSynchronizationError   Synchronization error.
+		cudaErrorInvalidFilterSetting   Invalid filter setting.
+		cudaErrorInvalidNormSetting     Invalid norm setting.
+		cudaErrorMixedDeviceExecution   Mixed device execution.
+		cudaErrorCudartUnloading        CUDA runtime unloading.
+		cudaErrorUnknown        Unknown error condition.
+		cudaErrorNotYetImplemented      Function not yet implemented.
+		cudaErrorMemoryValueTooLarge    Memory value too large.
+		cudaErrorInvalidResourceHandle  Invalid resource handle.
+		cudaErrorNotReady       Not ready error.
+		cudaErrorInsufficientDriver     CUDA runtime is newer than driver.
+		cudaErrorSetOnActiveProcess     Set on active process error.
+		cudaErrorNoDevice       No available CUDA device.
+		cudaErrorStartupFailure         Startup failure.
+		cudaErrorApiFailureBase         API failure base.
