@@ -20,155 +20,105 @@ namespace GpusDoneRight {
 	public:
 		class Device {
 		public:
-			cudaDeviceProp deviceProp;
-			int number;
-			int driverVersion;
-			int runtimeVersion;
-
-			Device():
-				number(0),
-				driverVersion(0),
-				runtimeVersion(0)
-			{};
-
-			void setTo(int dev)
+			Device(int dev) : number_(dev)
 			{
-				number_ = 3D_dev;
 				cudaGetDeviceProperties(&deviceProp_, dev);
-
-	#if CUDART_VERSION >=3D 2020
 				cudaDriverGetVersion(&driverVersion_);
 				cudaRuntimeGetVersion(&runtimeVersion_);
-	#endif
 			}
 
-			int  majorVersion() const { return deviceProp.major; }
+			int  majorVersion() const { return deviceProp_.major; }
 
-			int  minorVersion() const { return deviceProp.minor; }
+			int  minorVersion() const { return deviceProp_.minor; }
 
-			long globalMem() const { return deviceProp.totalGlobalMem;}
+			long globalMem() const { return deviceProp_.totalGlobalMem;}
 
-			long constantMemorySize() const { return deviceProp.totalConstMem; }
+			long constantMemorySize() const { return deviceProp_.totalConstMem; }
 
-			long sharedMemorySize() const { return deviceProp.sharedMemPerBlock; }
+			long sharedMemorySize() const { return deviceProp_.sharedMemPerBlock; }
 
-			int  regsPerBlock() const { return deviceProp.regsPerBlock; }
+			int  regsPerBlock() const { return deviceProp_.regsPerBlock; }
 
-			int  warpSize() const { return deviceProp.warpSize; }
+			int  warpSize() const { return deviceProp_.warpSize; }
 
-			int  maxThreadsPerBlock() const { return deviceProp.maxThreadsPerBlock; }
+			int  maxThreadsPerBlock() const { return deviceProp_.maxThreadsPerBlock; }
 
-			long memPitch() const { return deviceProp.memPitch; }
+			long memPitch() const { return deviceProp_.memPitch; }
 
-			long textureAlignment() const { return deviceProp.textureAlignment; }
+			long textureAlignment() const { return deviceProp_.textureAlignment; }
 
 			int numberOfMultiprocessors() const
 			{
-
-	#if CUDART_VERSION >=3D 2000
-				return deviceProp.multiProcessorCount;
-	#else
-				return -1;
-	#endif
+				return deviceProp_.multiProcessorCount;
 			}
 
 			std::string name() const
 			{
-				return deviceProp.name;
+				return deviceProp_.name;
 			}
 
 			int numberOfCores() const
 			{
-
-	#if CUDART_VERSION >=3D 2000
-				return deviceProp.multiProcessorCount * 8;
-	#else
-				return -1;
-	#endif
+				return deviceProp_.multiProcessorCount * 8;
 			}
 
 			int maxThreadsDim(int i) const
 			{
 				if (i>2)
 					throw std::range_error("dim index out of range in cuda.h");
-				return deviceProp.maxThreadsDim[i];
+				return deviceProp_.maxThreadsDim[i];
 			}
 
 			int maxGridSize(int i) const
 			{
 				if (i>2)
 					throw std::range_error("grid index out of range in cuda.h");
-				return deviceProp.maxGridSize[i];
+				return deviceProp_.maxGridSize[i];
 			}
 
 			std::string deviceOverlap() const
 			{
-	#if CUDART_VERSION >=3D 2000
-				return deviceProp.deviceOverlap ? "Yes" : "No";
-	#else
-				return "";
-	#endif
+				return deviceProp_.deviceOverlap ? "Yes" : "No";
 			}
 
 			std::string kernelExecTimeoutEnabled() const
 			{
-	#if CUDART_VERSION >=3D 2020
-				return deviceProp.kernelExecTimeoutEnabled ? "Yes" : "No";
-	#else
-				return "";
-	#endif
+				return deviceProp_.kernelExecTimeoutEnabled ? "Yes" : "No";
 			}
 
 			std::string integrated() const
 			{
-	#if CUDART_VERSION >=3D 2020
-				return deviceProp.integrated ? "Yes" : "No";
-	#else
-				return "";
-	#endif
+				return deviceProp_.integrated ? "Yes" : "No";
 			}
 
 			std::string canMapHostMemory() const
 			{
-	#if CUDART_VERSION >=3D 2020
-				return deviceProp.canMapHostMemory ? "Yes" : "No";
-	#else
-				return "";
-	#endif
+				return deviceProp_.canMapHostMemory ? "Yes" : "No";
 			}
 
 			std::string computeMode() const
 			{
-	#if CUDART_VERSION >=3D 2020
 				std::ostringstream msg;
-				if (deviceProp.computeMode =3D=3D cudaComputeModeDefault)
+				if (deviceProp_.computeMode =3D=3D cudaComputeModeDefault)
 					msg << "Default (multiple host threads can use this device simultaneously)\n";
 
-				if (deviceProp.computeMode =3D=3D cudaComputeModeExclusive)
+				if (deviceProp_.computeMode =3D=3D cudaComputeModeExclusive)
 					msg << "Exclusive (only one host thread at a time can use this device)\n";
 
-				if (deviceProp.computeMode =3D=3D cudaComputeModeProhibited)
+				if (deviceProp_.computeMode =3D=3D cudaComputeModeProhibited)
 					msg << "Prohibited (no host thread can use this device)\n";
 
 				return msg.str();
-	#else
-				return "";
-	#endif
 			}
-
-
-
-
-			//=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 
 			std::string toString() const
 			{
 				std::ostringstream msg;
 
 				msg << "-------------------------------------------------- ";
-				msg << name() << " Cuda Device["<< number << "] revision number ";
+				msg << name() << " Cuda Device["<< number_ << "] revision number ";
 				msg << majorVersion() << "." << minorVersion() << "\n";
-				if (deviceProp.major =3D=3D 9999 && deviceProp.minor =3D=3D 9999)
+				if (deviceProp_.major =3D=3D 9999 && deviceProp_.minor =3D=3D 9999)
 					msg << "There is no device supporting CUDA.\n";
 
 				//msg << "  CUDA Driver Version:        " << driverVersion/1000 << "." << driverVersion%100 << "\n";
@@ -187,7 +137,7 @@ namespace GpusDoneRight {
 				msg << "  Maximum sizes of each dimension of a grid:     " << maxGridSize(0) << " x " << maxGridSize(1) << " x " << maxGridSize(2) << "\n";
 				msg << "  Maximum memory pitch:                          " << memPitch()  << " bytes; \n";
 				msg << "  Texture alignment:                             " << textureAlignment() << " bytes\n";
-				msg << "  Clock rate:                                    " << (deviceProp.clockRate * 1e-6f) << " GHz\n";
+				msg << "  Clock rate:                                    " << (deviceProp_.clockRate * 1e-6f) << " GHz\n";
 				msg << "  Device Overlap:                                " << deviceOverlap() << "\n";
 				msg << "  Kernel Exec Timeout Enabled:                   " << kernelExecTimeoutEnabled() << "\n";
 				msg << "  Integrated:                                    " << integrated() << "\n";
@@ -196,34 +146,78 @@ namespace GpusDoneRight {
 				return msg.str();
 
 			}
-		}; // class Device
 
-	//=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+		private:
+			cudaDeviceProp deviceProp_;
+			int number_;
+			int driverVersion_;
+			int runtimeVersion_;
 
+		}; // inner class Device
 
-		static int getDeviceCount() {
-			int result;
+		Cuda():
+			devices_(getDeviceCount(),0)
+		{
+			if (verbose_) {
+				std::cout<<"Cuda::ctor(...): deviceCount=";
+				std::cout<<devices_.size()<<"\n";
+			}
+			for (size_t i=0; i<devices_.size(); i++)
+				devices_[i] = new Device(i);
+		}
+
+		~Cuda()
+		{
+			for (size_t i=0; i<devices_.size(); i++) {
+				delete devices_[i];
+				devices_[i] = 0;
+			}
+		}
+
+		
+
+		size_t size() const { return devices_.size(); }
+
+		std::string toString() {
+			std::ostringstream msg;
+			for (size_t i=0; i<devices_.size(); i++)
+				msg << devices_[i]->toString();
+			return msg.str();
+		}
+	private:
+
+		int getDeviceCount() {
+			initCudaApi();
+			int result = 0;
 			cudaGetDeviceCount(&result);
 			return result;
 		}
 
-		int deviceCount;
-		std::vector<Device> devices;
-
-		Cuda():
-			devices(getDeviceCount())
+		void initCudaApi()
 		{
-			for (size_t i=3D0; i<devices.size(); i++)
-				devices[i].setTo(i);
+			static bool firstCall = true;
+			if (!firstCall) return;
+			CUresult error = cuInit(0);
+			if (error != CUDA_SUCCESS) {
+				apiFatalError("cuInit",error);
+			}
+			if (verbose_) apiCallVerbose("cuInit");
+			firstCall = false;
 		}
 
-		std::string toString() {
-			std::ostringstream msg;
-			for (size_t i=3D0; i<devices.size(); i++)
-				msg << devices[i].toString();
-			return msg.str();
+		void apiFatalError(const std::string& apiFunc,const CUresult& error) const
+		{
+			std::string s = "Cuda::apiFatalError::" + apiFunc + 
+				"(...) error code=" + ttos(error)  + "\n";
+			throw std::runtime_error(s.c_str());
 		}
 
+		void apiCallVerbose(const std::string& apiFunc) const
+		{
+			std::string s = "Cuda::apiCallVerbose::" + apiFunc + "(...)\n";
+		}
+
+		std::vector<Device*> devices_;
 	}; // class Cuda
 } // end namespace GpusDoneRight
 
