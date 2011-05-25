@@ -18,10 +18,13 @@
 #include "TypeToString.h"
 
 #include <cuda.h>
-#include <cuda_runtime_api.h>
+
+// Note: It seems that API functions starting with cu belong to the Driver API
+// and functions staring with cuda belong to the Runtime API
+// Note: We are NOT using the runtime API.
 
 namespace GpusDoneRight {
-
+	
 	inline void apiFatalError(const std::string& apiFunc,const CUresult& error)
 	{
 		std::string s = "apiFatalError::" + apiFunc + 
@@ -37,142 +40,195 @@ namespace GpusDoneRight {
 
 	class Device {
 	public:
-		Device(int dev,bool verbose) : number_(dev)
+		enum {
+			MAX_THREADS_PER_BLOCK
+			PROP_SHARED_MEM_PER_BLOCK,
+			PROP_TOTAL_CONSTANT_MEMORY,
+			PROP_SIMD_WIDTH,
+			PROP_MEM_PITCH,
+			PROP_REGS_PER_BLOCK,
+			PROP_CLOCK_RATE,
+			PROP_TEXTURE_ALIGN,
+			PROP_MAX_THREADS_DIM,
+			PROP_GRID_SIZE
+		};
+		
+		char properties_[] = {
+			"maximum number of threads per block",
+			"total amount of shared memory available per block in bytes",
+			"total amount of constant memory available on the device in bytes",
+			"warp size",
+			"maximum pitch allowed by the memory copy functions that involve memory "
+				"regions allocated through cuMemAllocPitch()",
+			"regsPerBlock is the total number of registers available per block",
+			"clock frequency in kilohertz",
+			"alignment requirement",
+			"texture base addresses that are aligned to textureAl",
+			"maximum sizes of each dimension of a block",
+			"maximum sizes of each dimension of a grid"
+		};
+		
+		/**	The supported attributes are: */
+		char attributes_[] = {
+			"Maximum number of threads per block",
+			"Maximum x-dimension of a block",
+			"Maximum y-dimension of a block",
+			"Maximum z-dimension of a block",
+			"Maximum x-dimension of a grid",
+			"Maximum y-dimension of a grid",
+			"Maximum z-dimension of a grid",
+			"Maximum amount of shared memory available to a thread block in bytes"
+				"this amount is shared by all thread blocks simultaneously resident on a multiprocessor"
+			"Memory available on device for __constant__ variables in a CUDA C kernel in bytes",
+			"Warp size in threads",
+			"Maximum pitch in bytes allowed by the memory copy functions that involve memory regions "
+				" allocated through cuMemAllocPitch()",
+			"Maximum number of 32-bit registers available to a thread block"
+				"this number is shared by all thread blocks simultaneously resident on a multiprocessor",
+			"Peak clock frequency in kilohertz",
+			"Alignment requirement; texture base addresses aligned to textureAlign bytes "
+			" do not need an offset applied to texture fetches",
+			"1 if the device can concurrently copy memory between host and device while executing a kernel,"
+			" or 0 if not",
+			"Number of multiprocessors on the device",
+			"1 if there is a run time limit for kernels executed on the device, or 0 if not",
+			"1 if the device is integrated with the memory subsystem, or 0 if not"
+			"1 if the device can map host memory into the CUDA address space, or 0 if not"
+			"Compute mode that device is currently in. Available modes are as follows:"
+				"- CU_COMPUTEMODE_DEFAULT: Default mode - Device is not restricted and "
+					"can have multiple CUDA contexts present at a single time."
+				"- CU_COMPUTEMODE_EXCLUSIVE: Compute-exclusive mode - "
+					"Device can have only one CUDA context present on it at a time."
+				"- CU_COMPUTEMODE_PROHIBITED: Compute-prohibited mode - "
+					"Device is prohibited from creating new CUDA contexts."
+		};
+			
+		
+		Device(int dev,bool verbose) : number_(dev),verbose_(verbose)
 		{
-			cudaGetDeviceProperties(&deviceProp_, dev);
-			cudaDriverGetVersion(&driverVersion_);
-			cudaRuntimeGetVersion(&runtimeVersion_);
-			// Get handle for device 0
-			CUresult error = cuDeviceGet(&cuDevice_, 0);
+			CUresult error = cuDeviceGet(&cuDevice_, dev);
 			apiCall("cuDeviceGet",error,verbose);
+			
+			int len = 4096;
+			name_ = new char[len];
+			cuDeviceGetName (name_,len,cuDevice_);
+			
+			cuDeviceComputeCapability (major_,minor_,cuDevice_);
+			
+			cuDeviceTotalMem (&totalMem_,cuDevice);
+			
+			cuGetDeviceProperties(&deviceProp_, dev);
+			
+			// if you need attributes call attributes function below
+			// on a on-demand basis. Because there are so some many of 
+			// them, we won't handle them here.
 		}
-
-		int  majorVersion() const { return deviceProp_.major; }
-
-		int  minorVersion() const { return deviceProp_.minor; }
-
-		long globalMem() const { return deviceProp_.totalGlobalMem;}
-
-		long constantMemorySize() const { return deviceProp_.totalConstMem; }
-
-		long sharedMemorySize() const { return deviceProp_.sharedMemPerBlock; }
-
-		int  regsPerBlock() const { return deviceProp_.regsPerBlock; }
-
-		int  warpSize() const { return deviceProp_.warpSize; }
-
-		int  maxThreadsPerBlock() const { return deviceProp_.maxThreadsPerBlock; }
-
-		long memPitch() const { return deviceProp_.memPitch; }
-
-		long textureAlignment() const { return deviceProp_.textureAlignment; }
-
-		int numberOfMultiprocessors() const
+		
+		~Device()
 		{
-			return deviceProp_.multiProcessorCount;
+			delete [] name_;
 		}
+		
+		int number() const { return number_; }
+		
+		const char* name() const { return name_; }
+		
+		int  majorVersion() const { return major_; }
 
-		std::string name() const
+		int  minorVersion() const { return minor_; }
+
+		unsigned int globalMem() const { return totalMem_;}
+
+		// Device properties
+		
+		int getProperty(size_t prop) const
 		{
-			return deviceProp_.name;
+			switch (prop) {
+			case MAX_THREADS_PER_BLOCK:
+				eturn deviceProp_.maxThreadsPerBlock;
+			case PROP_SHARED_MEM_PER_BLOCK:
+				return deviceProp_.sharedMemPerBlock;
+			case PROP_TOTAL_CONSTANT_MEMORY:
+				return deviceProp_.totalConstantMemory;
+			case PROP_SIMD_WIDTH:
+				return deviceProp_.SIMDWidth;
+			case PROP_MEM_PITCH:
+				return deviceProp_.memPitch;
+			case PROP_REGS_PER_BLOCK:
+				return deviceProp_.regsPerBlock;
+			case PROP_CLOCK_RATE:
+				return deviceProp_.clockRate;
+			case PROP_TEXTURE_ALIGN:
+				return deviceProp_.textureAlign;
+			}
+			return -1;
 		}
-
-		int numberOfCores() const
+		
+		void getProperty(std::vector<int>& x,size_t prop) const
 		{
-			return deviceProp_.multiProcessorCount * 8;
+			switch (prop) {
+			case PROP_MAX_THREADS_DIM:
+				vectorSet(x,deviceProp_.maxThreadsDim);
+				return;
+			case PROP_GRID_SIZE:
+				vectorSet(x,deviceProp_.maxGridSize);
+				return;
+			}
 		}
-
-		int maxThreadsDim(int i) const
+		
+		bool isExtendedProperty(size_t i) const
 		{
-			if (i>2)
-				throw std::range_error("dim index out of range in cuda.h");
-			return deviceProp_.maxThreadsDim[i];
+			return (i<BASIS_PROPERTIES) ? true : false;
 		}
-
-		int maxGridSize(int i) const
+		
+			
+	
+		int getAttribute (CUdevice_attribute attrib)
 		{
-			if (i>2)
-				throw std::range_error("grid index out of range in cuda.h");
-			return deviceProp_.maxGridSize[i];
+			int pi = 0;
+			CUResult error = cuDeviceGetAttribute(&pi,attrib,cuDevice_);
+			apiCall("cuDeviceGetAttribute",error,verbose_);
+			return pi;
 		}
-
-		std::string deviceOverlap() const
-		{
-			return deviceProp_.deviceOverlap ? "Yes" : "No";
-		}
-
-		std::string kernelExecTimeoutEnabled() const
-		{
-			return deviceProp_.kernelExecTimeoutEnabled ? "Yes" : "No";
-		}
-
-		std::string integrated() const
-		{
-			return deviceProp_.integrated ? "Yes" : "No";
-		}
-
-		std::string canMapHostMemory() const
-		{
-			return deviceProp_.canMapHostMemory ? "Yes" : "No";
-		}
-
-		std::string computeMode() const
-		{
-			std::ostringstream msg;
-			if (deviceProp_.computeMode == cudaComputeModeDefault)
-				msg << "Default (multiple host threads can use this device simultaneously)\n";
-
-			if (deviceProp_.computeMode == cudaComputeModeExclusive)
-				msg << "Exclusive (only one host thread at a time can use this device)\n";
-
-			if (deviceProp_.computeMode == cudaComputeModeProhibited)
-				msg << "Prohibited (no host thread can use this device)\n";
-
-			return msg.str();
-		}
-
+		
 		std::string toString() const
 		{
 			std::ostringstream msg;
 
 			msg << "-------------------------------------------------- ";
 			msg << name() << " Cuda Device["<< number_ << "] revision number ";
-			msg << majorVersion() << "." << minorVersion() << "\n";
-			if (deviceProp_.major == 9999 && deviceProp_.minor == 9999)
-				msg << "There is no device supporting CUDA.\n";
-
-			//msg << "  CUDA Driver Version:        " << driverVersion/1000 << "." << driverVersion%100 << "\n";
-			msg << "  global memory:              " << globalMem() << "\n";
-			msg << "  number of multiprocessors:  " << numberOfMultiprocessors() << "\n";
-			msg << "  number of cores:            " << numberOfCores() << "\n";
-
-			msg << "  Total amount of constant memory:               " << constantMemorySize() << " bytes\n";
-			msg << "  Total amount of shared memory per block:       " << sharedMemorySize()   << " bytes\n";
-			msg << "  Total number of registers available per block: " << regsPerBlock()       << "\n";
-			msg << "  Warp size:                                     " << warpSize()           << "\n";;
-			msg << "  Maximum number of threads per block:           " << maxThreadsPerBlock() << "\n";
-
-			msg << "  Maximum sizes of each dimension of a block:    ";
-			msg << maxThreadsDim(0) << " x " << maxThreadsDim(1) << " x " << maxThreadsDim(2) << "\n";
-			msg << "  Maximum sizes of each dimension of a grid:     " << maxGridSize(0) << " x " << maxGridSize(1) << " x " << maxGridSize(2) << "\n";
-			msg << "  Maximum memory pitch:                          " << memPitch()  << " bytes; \n";
-			msg << "  Texture alignment:                             " << textureAlignment() << " bytes\n";
-			msg << "  Clock rate:                                    " << (deviceProp_.clockRate * 1e-6f) << " GHz\n";
-			msg << "  Device Overlap:                                " << deviceOverlap() << "\n";
-			msg << "  Kernel Exec Timeout Enabled:                   " << kernelExecTimeoutEnabled() << "\n";
-			msg << "  Integrated:                                    " << integrated() << "\n";
-			msg << "  Can Map Host Memory:                           " << canMapHostMemory() << "\n";
-			msg << "  Compute Mode:                                  " << computeMode() << "\n";
+			msg << major_<< "." << minor_ << "\n";
+			
+			msg << "  global memory:              " << totalMem_ << "\n";
+			msg << "#Properties:\n";
+			for (size_t i=0;i<properties_.size();i++) {
+				if (isExtendedProperty(i)) {
+					std::vector<int> x(3);
+					getProperty(x,i);
+					msg<<properties_[i]<<" = "<<x[0]<<" "<<x[1]<<" "<<x[2]<<"\n";
+					continue;
+				}
+				int x = getProperty(i);
+				msg<<properties_[i]<<" = "<<x<<"\n";
+				
+			}
+			msg << "#Attributes:\n";
+			for (size_t i=0;i<attributes_.size();i++) {
+				int x = getAttribute(i);
+				msg<<attributes_[i]<<" = "<<x<<"\n";
+			}
+			
 			return msg.str();
 
 		}
 
 	private:
-		cudaDeviceProp deviceProp_;
 		int number_;
-		int driverVersion_;
-		int runtimeVersion_;
 		CUdevice cuDevice_;
+		char *name_;
+		int major_,minor_;
+		unsigned int totalMem_;
+		CUdevprop deviceProp_,
 
 	}; // class Device
 } // end namespace GpusDoneRight

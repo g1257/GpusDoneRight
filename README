@@ -19,7 +19,7 @@ Dependencies:
 * NVIDIA SDK for GPUS (in principle only the low-level driver API include
 files and libraries like libcuda.so, also the nvcc compiler to create
 the .ptx file)
-* PsimagLite ( https:://github.com/g1257/PsimagLite/ )
+* PsimagLite ( https://github.com/g1257/PsimagLite/ )
 * Some hardware with some kind of new model GPU to go with the SDK, I suppose
 
 --------------------------------------------------------------------------------
