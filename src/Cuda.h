@@ -18,7 +18,6 @@
 #include "TypeToString.h"
 
 #include <cuda.h>
-#include <cuda_runtime_api.h>
 
 namespace GpusDoneRight {
 
@@ -59,7 +58,7 @@ namespace GpusDoneRight {
 		{
 			initCudaApi();
 			int result = 0;
-			cudaGetDeviceCount(&result);
+			cuDeviceGetCount (&result);
 			return result;
 		}
 

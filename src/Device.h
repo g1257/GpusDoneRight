@@ -41,7 +41,7 @@ namespace GpusDoneRight {
 	class Device {
 	public:
 		enum {
-			MAX_THREADS_PER_BLOCK
+			MAX_THREADS_PER_BLOCK,
 			PROP_SHARED_MEM_PER_BLOCK,
 			PROP_TOTAL_CONSTANT_MEMORY,
 			PROP_SIMD_WIDTH,
@@ -53,58 +53,14 @@ namespace GpusDoneRight {
 			PROP_GRID_SIZE
 		};
 		
-		char properties_[] = {
-			"maximum number of threads per block",
-			"total amount of shared memory available per block in bytes",
-			"total amount of constant memory available on the device in bytes",
-			"warp size",
-			"maximum pitch allowed by the memory copy functions that involve memory "
-				"regions allocated through cuMemAllocPitch()",
-			"regsPerBlock is the total number of registers available per block",
-			"clock frequency in kilohertz",
-			"alignment requirement",
-			"texture base addresses that are aligned to textureAl",
-			"maximum sizes of each dimension of a block",
-			"maximum sizes of each dimension of a grid"
-		};
-		
+		static const char *properties_[]; // see the end of this file
+
+		static size_t const BASIC_PROPERTIES, ALL_PROPERTIES, ALL_ATTRIBUTES;
+
 		/**	The supported attributes are: */
-		char attributes_[] = {
-			"Maximum number of threads per block",
-			"Maximum x-dimension of a block",
-			"Maximum y-dimension of a block",
-			"Maximum z-dimension of a block",
-			"Maximum x-dimension of a grid",
-			"Maximum y-dimension of a grid",
-			"Maximum z-dimension of a grid",
-			"Maximum amount of shared memory available to a thread block in bytes"
-				"this amount is shared by all thread blocks simultaneously resident on a multiprocessor"
-			"Memory available on device for __constant__ variables in a CUDA C kernel in bytes",
-			"Warp size in threads",
-			"Maximum pitch in bytes allowed by the memory copy functions that involve memory regions "
-				" allocated through cuMemAllocPitch()",
-			"Maximum number of 32-bit registers available to a thread block"
-				"this number is shared by all thread blocks simultaneously resident on a multiprocessor",
-			"Peak clock frequency in kilohertz",
-			"Alignment requirement; texture base addresses aligned to textureAlign bytes "
-			" do not need an offset applied to texture fetches",
-			"1 if the device can concurrently copy memory between host and device while executing a kernel,"
-			" or 0 if not",
-			"Number of multiprocessors on the device",
-			"1 if there is a run time limit for kernels executed on the device, or 0 if not",
-			"1 if the device is integrated with the memory subsystem, or 0 if not"
-			"1 if the device can map host memory into the CUDA address space, or 0 if not"
-			"Compute mode that device is currently in. Available modes are as follows:"
-				"- CU_COMPUTEMODE_DEFAULT: Default mode - Device is not restricted and "
-					"can have multiple CUDA contexts present at a single time."
-				"- CU_COMPUTEMODE_EXCLUSIVE: Compute-exclusive mode - "
-					"Device can have only one CUDA context present on it at a time."
-				"- CU_COMPUTEMODE_PROHIBITED: Compute-prohibited mode - "
-					"Device is prohibited from creating new CUDA contexts."
-		};
-			
+		static const char *attributes_[]; // see the end of this file
 		
-		Device(int dev,bool verbose) : number_(dev),verbose_(verbose)
+		Device(int dev,bool verbose) : verbose_(verbose),number_(dev)
 		{
 			CUresult error = cuDeviceGet(&cuDevice_, dev);
 			apiCall("cuDeviceGet",error,verbose);
@@ -113,11 +69,11 @@ namespace GpusDoneRight {
 			name_ = new char[len];
 			cuDeviceGetName (name_,len,cuDevice_);
 			
-			cuDeviceComputeCapability (major_,minor_,cuDevice_);
+			cuDeviceComputeCapability (&major_,&minor_,cuDevice_);
 			
-			cuDeviceTotalMem (&totalMem_,cuDevice);
+			cuDeviceTotalMem (&totalMem_,cuDevice_);
 			
-			cuGetDeviceProperties(&deviceProp_, dev);
+			cuDeviceGetProperties(&deviceProp_, dev);
 			
 			// if you need attributes call attributes function below
 			// on a on-demand basis. Because there are so some many of 
@@ -145,7 +101,7 @@ namespace GpusDoneRight {
 		{
 			switch (prop) {
 			case MAX_THREADS_PER_BLOCK:
-				eturn deviceProp_.maxThreadsPerBlock;
+				return deviceProp_.maxThreadsPerBlock;
 			case PROP_SHARED_MEM_PER_BLOCK:
 				return deviceProp_.sharedMemPerBlock;
 			case PROP_TOTAL_CONSTANT_MEMORY:
@@ -178,15 +134,13 @@ namespace GpusDoneRight {
 		
 		bool isExtendedProperty(size_t i) const
 		{
-			return (i<BASIS_PROPERTIES) ? true : false;
+			return (i<BASIC_PROPERTIES) ? true : false;
 		}
 		
-			
-	
-		int getAttribute (CUdevice_attribute attrib)
+		int getAttribute (CUdevice_attribute attrib) const
 		{
 			int pi = 0;
-			CUResult error = cuDeviceGetAttribute(&pi,attrib,cuDevice_);
+			CUresult error = cuDeviceGetAttribute(&pi,attrib,cuDevice_);
 			apiCall("cuDeviceGetAttribute",error,verbose_);
 			return pi;
 		}
@@ -201,7 +155,7 @@ namespace GpusDoneRight {
 			
 			msg << "  global memory:              " << totalMem_ << "\n";
 			msg << "#Properties:\n";
-			for (size_t i=0;i<properties_.size();i++) {
+			for (size_t i=0;i<ALL_PROPERTIES;i++) {
 				if (isExtendedProperty(i)) {
 					std::vector<int> x(3);
 					getProperty(x,i);
@@ -213,8 +167,9 @@ namespace GpusDoneRight {
 				
 			}
 			msg << "#Attributes:\n";
-			for (size_t i=0;i<attributes_.size();i++) {
-				int x = getAttribute(i);
+			for (size_t i=0;i<ALL_ATTRIBUTES;i++) {
+				CUdevice_attribute attrib = (CUdevice_attribute) i;
+				int x = getAttribute(attrib);
 				msg<<attributes_[i]<<" = "<<x<<"\n";
 			}
 			
@@ -223,14 +178,78 @@ namespace GpusDoneRight {
 		}
 
 	private:
+
+		void vectorSet(std::vector<int>& x,const int* y) const
+		{
+			for (size_t i=0;i<x.size();i++) x[i] = y[i];
+		}
+
+		bool verbose_;
 		int number_;
 		CUdevice cuDevice_;
 		char *name_;
 		int major_,minor_;
 		unsigned int totalMem_;
-		CUdevprop deviceProp_,
+		CUdevprop deviceProp_;
 
 	}; // class Device
+	
+	//! description of properties for the driver API
+	const char *Device::properties_[] = {
+		"maximum number of threads per block",
+		"total amount of shared memory available per block in bytes",
+		"total amount of constant memory available on the device in bytes",
+		"warp size",
+		"maximum pitch allowed by the memory copy functions that involve memory "
+			"regions allocated through cuMemAllocPitch()",
+		"regsPerBlock is the total number of registers available per block",
+		"clock frequency in kilohertz",
+		"alignment requirement",
+		"texture base addresses that are aligned to textureAl",
+		"maximum sizes of each dimension of a block",
+		"maximum sizes of each dimension of a grid"
+	};
+	
+	//! properties above that are just an integer:	
+	size_t const Device::BASIC_PROPERTIES = 9;
+	size_t const Device::ALL_PROPERTIES = 11;
+
+	/*! The supported attributes of the driver API are: */
+	size_t const Device::ALL_ATTRIBUTES = 20;	
+	const char *Device::attributes_[] = {
+		"Maximum number of threads per block",
+		"Maximum x-dimension of a block",
+		"Maximum y-dimension of a block",
+		"Maximum z-dimension of a block",
+		"Maximum x-dimension of a grid",
+		"Maximum y-dimension of a grid",
+		"Maximum z-dimension of a grid",
+		"Maximum amount of shared memory available to a thread block in bytes"
+			"this amount is shared by all thread blocks simultaneously resident on a multiprocessor"
+		"Memory available on device for __constant__ variables in a CUDA C kernel in bytes",
+		"Warp size in threads",
+		"Maximum pitch in bytes allowed by the memory copy functions that involve memory regions "
+			" allocated through cuMemAllocPitch()",
+		"Maximum number of 32-bit registers available to a thread block"
+			"this number is shared by all thread blocks simultaneously resident on a multiprocessor",
+		"Peak clock frequency in kilohertz",
+		"Alignment requirement; texture base addresses aligned to textureAlign bytes "
+			" do not need an offset applied to texture fetches",
+		"1 if the device can concurrently copy memory between host and device while executing a kernel,"
+			" or 0 if not",
+		"Number of multiprocessors on the device",
+		"1 if there is a run time limit for kernels executed on the device, or 0 if not",
+		"1 if the device is integrated with the memory subsystem, or 0 if not"
+		"1 if the device can map host memory into the CUDA address space, or 0 if not"
+		"Compute mode that device is currently in. Available modes are as follows:"
+			"- CU_COMPUTEMODE_DEFAULT: Default mode - Device is not restricted and "
+				"can have multiple CUDA contexts present at a single time."
+			"- CU_COMPUTEMODE_EXCLUSIVE: Compute-exclusive mode - "
+				"Device can have only one CUDA context present on it at a time."
+			"- CU_COMPUTEMODE_PROHIBITED: Compute-prohibited mode - "
+				"Device is prohibited from creating new CUDA contexts."
+	};
+		
 } // end namespace GpusDoneRight
 
 /*@}*/

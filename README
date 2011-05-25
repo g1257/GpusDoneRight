@@ -25,8 +25,8 @@ the .ptx file)
 --------------------------------------------------------------------------------
 
 Quick Start.
-cd drivers/
-to be written...
-Does not compile or link yet... working on it...
+cd examples/
+make simpleQuery
+./simpleQuery
 --------------------------------------------------------------------------------
 
