@@ -35,7 +35,7 @@ namespace GpusDoneRight {
 	inline void apiCall(const std::string& apiFunc,const CUresult& error,bool verbose)
 	{
 		if (verbose) std::string s = "apiCallVerbose::" + apiFunc + "(...)\n";
-		if (error != CUDA_SUCCESS) apiFatalError("cuInit",error);
+		if (error != CUDA_SUCCESS) apiFatalError(apiFunc,error);
 	}
 
 	class Device {
@@ -60,6 +60,8 @@ namespace GpusDoneRight {
 		/**	The supported attributes are: */
 		static const char *attributes_[]; // see the end of this file
 		
+		static const CUdevice_attribute attribNumbers_[]; // see the end of this file
+
 		Device(int dev,bool verbose) : verbose_(verbose),number_(dev)
 		{
 			CUresult error = cuDeviceGet(&cuDevice_, dev);
@@ -73,8 +75,9 @@ namespace GpusDoneRight {
 			
 			cuDeviceTotalMem (&totalMem_,cuDevice_);
 			
-			cuDeviceGetProperties(&deviceProp_, dev);
-			
+			error = cuDeviceGetProperties(&deviceProp_, cuDevice_);
+			apiCall("cuDeviceGetProperties",error,verbose);
+
 			// if you need attributes call attributes function below
 			// on a on-demand basis. Because there are so some many of 
 			// them, we won't handle them here.
@@ -122,6 +125,7 @@ namespace GpusDoneRight {
 		
 		void getProperty(std::vector<int>& x,size_t prop) const
 		{
+			for (size_t i=0;i<x.size();i++) x[i]=0;
 			switch (prop) {
 			case PROP_MAX_THREADS_DIM:
 				vectorSet(x,deviceProp_.maxThreadsDim);
@@ -168,8 +172,8 @@ namespace GpusDoneRight {
 			}
 			msg << "#Attributes:\n";
 			for (size_t i=0;i<ALL_ATTRIBUTES;i++) {
-				CUdevice_attribute attrib = (CUdevice_attribute) i;
-				int x = getAttribute(attrib);
+				
+				int x = getAttribute(attribNumbers_[i]);
 				msg<<attributes_[i]<<" = "<<x<<"\n";
 			}
 			
@@ -215,7 +219,7 @@ namespace GpusDoneRight {
 	size_t const Device::ALL_PROPERTIES = 11;
 
 	/*! The supported attributes of the driver API are: */
-	size_t const Device::ALL_ATTRIBUTES = 20;	
+	size_t const Device::ALL_ATTRIBUTES = 22;	
 	const char *Device::attributes_[] = {
 		"Maximum number of threads per block",
 		"Maximum x-dimension of a block",
@@ -224,14 +228,14 @@ namespace GpusDoneRight {
 		"Maximum x-dimension of a grid",
 		"Maximum y-dimension of a grid",
 		"Maximum z-dimension of a grid",
-		"Maximum amount of shared memory available to a thread block in bytes"
-			"this amount is shared by all thread blocks simultaneously resident on a multiprocessor"
+		"Maximum amount of shared memory available to a thread block in bytes",
+		"This amount is shared by all thread blocks simultaneously resident on a multiprocessor",
 		"Memory available on device for __constant__ variables in a CUDA C kernel in bytes",
 		"Warp size in threads",
 		"Maximum pitch in bytes allowed by the memory copy functions that involve memory regions "
 			" allocated through cuMemAllocPitch()",
-		"Maximum number of 32-bit registers available to a thread block"
-			"this number is shared by all thread blocks simultaneously resident on a multiprocessor",
+		"Maximum number of 32-bit registers available to a thread block",
+		"This number is shared by all thread blocks simultaneously resident on a multiprocessor",
 		"Peak clock frequency in kilohertz",
 		"Alignment requirement; texture base addresses aligned to textureAlign bytes "
 			" do not need an offset applied to texture fetches",
@@ -239,8 +243,8 @@ namespace GpusDoneRight {
 			" or 0 if not",
 		"Number of multiprocessors on the device",
 		"1 if there is a run time limit for kernels executed on the device, or 0 if not",
-		"1 if the device is integrated with the memory subsystem, or 0 if not"
-		"1 if the device can map host memory into the CUDA address space, or 0 if not"
+		"1 if the device is integrated with the memory subsystem, or 0 if not",
+		"1 if the device can map host memory into the CUDA address space, or 0 if not",
 		"Compute mode that device is currently in. Available modes are as follows:"
 			"- CU_COMPUTEMODE_DEFAULT: Default mode - Device is not restricted and "
 				"can have multiple CUDA contexts present at a single time."
@@ -249,7 +253,31 @@ namespace GpusDoneRight {
 			"- CU_COMPUTEMODE_PROHIBITED: Compute-prohibited mode - "
 				"Device is prohibited from creating new CUDA contexts."
 	};
-		
+	
+	const CUdevice_attribute Device::attribNumbers_[] = {
+		CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
+		CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X,
+		CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Y,
+		CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Z,
+		CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_X,
+		CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_Y,
+		CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_Z,
+		CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK,
+		CU_DEVICE_ATTRIBUTE_SHARED_MEMORY_PER_BLOCK,
+		CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY,
+		CU_DEVICE_ATTRIBUTE_WARP_SIZE,
+		CU_DEVICE_ATTRIBUTE_MAX_PITCH,
+		CU_DEVICE_ATTRIBUTE_MAX_REGISTERS_PER_BLOCK,
+		CU_DEVICE_ATTRIBUTE_REGISTERS_PER_BLOCK,
+		CU_DEVICE_ATTRIBUTE_CLOCK_RATE,
+		CU_DEVICE_ATTRIBUTE_TEXTURE_ALIGNMENT,
+		CU_DEVICE_ATTRIBUTE_GPU_OVERLAP,
+		CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT,
+		CU_DEVICE_ATTRIBUTE_KERNEL_EXEC_TIMEOUT,
+		CU_DEVICE_ATTRIBUTE_INTEGRATED,
+		CU_DEVICE_ATTRIBUTE_CAN_MAP_HOST_MEMORY,
+		CU_DEVICE_ATTRIBUTE_COMPUTE_MODE
+	};
 } // end namespace GpusDoneRight
 
 /*@}*/
