@@ -73,6 +73,8 @@ namespace GpusDoneRight {
 		{
 			delete [] name_;
 		}
+
+		const CUdevice& getHandle() const { return cuDevice_; } 
 		
 		int number() const { return number_; }
 		

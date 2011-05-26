@@ -27,21 +27,26 @@ namespace GpusDoneRight {
 		static const CUresult cudaErrorCode_[];
 		static const char* cudaErrorDesc_[];
 		static const size_t ALL_ERRORS;
-	
 	public:
-		static void check(const std::string& apiFunc,const CUresult& error,bool verbose)
+		enum {THROW, DO_NOT_THROW};
+
+		static void check(
+			const std::string& apiFunc,
+			const CUresult& error,
+			bool verbose,
+			size_t throwOrNot = THROW)
 		{
 			if (verbose) std::string s = "apiCallVerbose::" + apiFunc + "(...)\n";
-			if (error != CUDA_SUCCESS) apiFatalError(apiFunc,error);
+			if (error != CUDA_SUCCESS) apiFatalError(apiFunc,error,throwOrNot);
 		}
 
 	private:
-		static void apiFatalError(const std::string& apiFunc,const CUresult& error)
+		static void apiFatalError(const std::string& apiFunc,const CUresult& error,size_t throwOrNot)
 		{
 			std::string s = "apiFatalError::" + apiFunc + 
 				"(...) error code=" + ttos(error)  + "\n";
 			s +=  std::string(getErrorString(error)) + "\n";
-			throw std::runtime_error(s.c_str());
+			if (throwOrNot == THROW) throw std::runtime_error(s.c_str());
 		}
 
 		static const char*  getErrorString(const CUresult& error) 
