@@ -5,8 +5,8 @@ GpusDoneRight(tm) is free software, see file LICENSE.
 
 GpusDoneRight(tm) is a collection of C++ classes (in .h files)
 to simplify the programming of GPUs.
-We are using the low-level driver API, so that the
-code is standard C++ without ``decorations.''
+We are using the low-level driver API, so that the (CPU)
+code is standard C++ without ``decorations,'' or language extensions.
 We are using the CUDA driver API, although other APIs might
 be added in the future. 
 GPU kernels go in a separate .cu file; they are usually
@@ -16,11 +16,11 @@ compiled using nvcc into a .ptx file.
 
 Dependencies:
 * GNU C++ compiler
-* NVIDIA SDK for GPUS (in principle only the low-level driver API include
-files and libraries like libcuda.so, also the nvcc compiler to create
-the .ptx file)
+* The low-level driver API, i.e., basically the cuda.h include
+file and the library libcuda.so
+* the nvcc compiler to create the .ptx file for the GPU kernel(s). More on kernels
+coming soon...
 * PsimagLite ( https://github.com/g1257/PsimagLite/ )
-* Some hardware with some kind of new model GPU to go with the SDK, I suppose
 
 --------------------------------------------------------------------------------
 
