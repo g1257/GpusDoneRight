@@ -22,11 +22,31 @@
 namespace GpusDoneRight {
 
 	class Context {
-	public:
-		Context(const CUdevice& handle, bool verbose = true) : verbose_(verbose)
+	public:    
+		/** Flags can be: 
+			* CU_CTX_SCHED_AUTO: The default value if the flags parameter is zero, uses a heuristic based on 
+				the number of active CUDA contexts in the process C and the number of logical processors 
+				in the system P. If C > P, then CUDA will yield to other OS threads when waiting for the GPU, 
+				otherwise CUDA will not yield while waiting for results and actively spin on the processor.
+
+    			* CU_CTX_SCHED_SPIN: Instruct CUDA to actively spin when waiting for results from the GPU. 
+				This can decrease latency when waiting for the GPU, but may lower the performance of CPU 
+				threads if they are performing work in parallel with the CUDA thread.
+
+   	 		* CU_CTX_SCHED_YIELD: Instruct CUDA to yield its thread when waiting for results from the GPU. 
+				This can increase latency when waiting for the GPU, but can increase the performance of CPU 
+				threads performing work in parallel with the GPU.
+
+    			* CU_CTX_BLOCKING_SYNC: Instruct CUDA to block the CPU thread on a synchronization primitive when 
+				waiting for the GPU to finish work.
+
+    			* CU_CTX_MAP_HOST: Instruct CUDA to support mapped pinned allocations. This flag must be set in order to 
+				allocate pinned host memory that is accessible to the GPU.
+		*/
+		Context(const CUdevice& handle, unsigned int flags = 0,bool verbose = true) : verbose_(verbose)
 		{
 			// Create context
-			CUresult error = cuCtxCreate(&cuContext_, 0, handle);
+			CUresult error = cuCtxCreate(&cuContext_, flags, handle);
     			ApiWrapper::check("cuCtxCreate",error,verbose_);
 		}
 		
@@ -40,7 +60,7 @@ namespace GpusDoneRight {
 	private:
 		bool verbose_;
 		CUcontext cuContext_; // we own this
-}; // class Context
+	}; // class Context
 } // end namespace GpusDoneRight
 
 /*@}*/
