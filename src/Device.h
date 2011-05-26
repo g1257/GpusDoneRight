@@ -17,27 +17,13 @@
 #include <iostream>
 #include "TypeToString.h"
 
-#include <cuda.h>
+#include "ApiWrapper.h"
 
 // Note: It seems that API functions starting with cu belong to the Driver API
 // and functions staring with cuda belong to the Runtime API
 // Note: We are NOT using the runtime API.
 
 namespace GpusDoneRight {
-	
-	inline void apiFatalError(const std::string& apiFunc,const CUresult& error)
-	{
-		std::string s = "apiFatalError::" + apiFunc + 
-			"(...) error code=" + ttos(error)  + "\n";
-		throw std::runtime_error(s.c_str());
-	}
-
-	inline void apiCall(const std::string& apiFunc,const CUresult& error,bool verbose)
-	{
-		if (verbose) std::string s = "apiCallVerbose::" + apiFunc + "(...)\n";
-		if (error != CUDA_SUCCESS) apiFatalError(apiFunc,error);
-	}
-
 	class Device {
 	public:
 		enum {
@@ -65,7 +51,7 @@ namespace GpusDoneRight {
 		Device(int dev,bool verbose) : verbose_(verbose),number_(dev)
 		{
 			CUresult error = cuDeviceGet(&cuDevice_, dev);
-			apiCall("cuDeviceGet",error,verbose);
+			ApiWrapper::check("cuDeviceGet",error,verbose);
 			
 			int len = 4096;
 			name_ = new char[len];
@@ -76,7 +62,7 @@ namespace GpusDoneRight {
 			cuDeviceTotalMem (&totalMem_,cuDevice_);
 			
 			error = cuDeviceGetProperties(&deviceProp_, cuDevice_);
-			apiCall("cuDeviceGetProperties",error,verbose);
+			ApiWrapper::check("cuDeviceGetProperties",error,verbose);
 
 			// if you need attributes call attributes function below
 			// on a on-demand basis. Because there are so some many of 
@@ -145,7 +131,7 @@ namespace GpusDoneRight {
 		{
 			int pi = 0;
 			CUresult error = cuDeviceGetAttribute(&pi,attrib,cuDevice_);
-			apiCall("cuDeviceGetAttribute",error,verbose_);
+			ApiWrapper::check("cuDeviceGetAttribute",error,verbose_);
 			return pi;
 		}
 		

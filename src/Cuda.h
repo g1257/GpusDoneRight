@@ -17,7 +17,7 @@
 #include <iostream>
 #include "TypeToString.h"
 
-#include <cuda.h>
+#include "ApiWrapper.h"
 
 namespace GpusDoneRight {
 
@@ -67,7 +67,7 @@ namespace GpusDoneRight {
 			static bool firstCall = true;
 			if (!firstCall) return;
 			CUresult error = cuInit(0);
-			apiCall("cuInit",error,verbose_);
+			ApiWrapper::check("cuInit",error,verbose_);
 			firstCall = false;
 		}
 
