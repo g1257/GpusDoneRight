@@ -1,7 +1,7 @@
 /** \ingroup GpusDoneRight */
 /*@{*/
 
-/*! \file Cuda.h
+/*! \file Context.h
  *
  * DOCUMENTATION HERE FIXME
  *
