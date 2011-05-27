@@ -2,7 +2,8 @@
 #include "Cuda.h"
 #include "Context.h"
 #include "Module.h"
-#include "Memory.h"
+#include "GpuFunction.h"
+#include "GpuPointer.h"
 #include "Random48.h" // in PsimagLite
 #include "Vector.h" // in PsimagLite
 
@@ -10,8 +11,10 @@ typedef GpusDoneRight::Device DeviceType;
 typedef GpusDoneRight::Cuda<DeviceType> CudaType;
 typedef GpusDoneRight::Context ContextType;
 typedef GpusDoneRight::Module ModuleType;
-typedef GpusDoneRight::Memory MemoryType;
+typedef GpusDoneRight::GpuFunction<ModuleType> GpuFunctionType;
+
 typedef float RealType;
+typedef GpusDoneRight::GpuPointer<RealType> GpuPointerType;
 
 int main(int argc,char *argv[])
 {
@@ -20,11 +23,10 @@ int main(int argc,char *argv[])
 	std::string s = cuda.toString();
 	std::cout<<s;
 	std::cout<<"--------------------\n";
-	ContextType context(cuda.getHandle(0));
+	ContextType context(cuda.getDevice(0));
 	ModuleType module("addTwoVectors.ptx");
-	CUfunction *hfunc;
-	module.getFunction(hfunc,"addTwoVectors");
-
+	GpuFunctionType gpuFunction1(module,"addTwoVectors");
+	
 	// Host memory allocation
 	size_t n = 10000;
 	std::vector<RealType> hostA(n),hostB(n);
@@ -34,23 +36,15 @@ int main(int argc,char *argv[])
 	PsimagLite::randomizeVector(hostB,0.0,1.0,random48);
 
 	// Device memory allocation
-	MemoryType memory;
-	unsigned int nDevice = n * sizeof(RealType);
-	CUdeviceptr deviceA;
-	memory.alloc(&deviceA,nDevice);
-	CUdeviceptr deviceB;
-	memory.alloc(&deviceB,nDevice);
-	CUdeviceptr deviceC;
-	memory.alloc(&deviceC,nDevice);
+	GpuPointerType deviceA(n),deviceB(n),deviceC(n);
 	
 	// Copy of memory from host to device
-	memory.cpyHtoD(deviceA, &(hostA[0]), nDevice);
-	memory.cpyHtoD(deviceB, &(hostB[0]), nDevice);
+	deviceA = hostA;
+	deviceB = hostB;
 	
 	// Kernel invocation
 	
 	// Copy of memory from device to host
 	std::vector<RealType> hostC(n);
-	memory.cpyDtoH(&(hostC[0]),deviceC,nDevice);
-
+	deviceC.copyToHost(hostC);
 }

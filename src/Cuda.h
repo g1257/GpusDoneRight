@@ -44,9 +44,9 @@ namespace GpusDoneRight {
 		}
 		
 		
-		const CUdevice& getHandle(size_t i) const
+		const CUdevice& getDevice(size_t i) const
 		{
-			return devices_[i]->getHandle();
+			return devices_[i]->get();
 		}
 
 		size_t size() const { return devices_.size(); }
