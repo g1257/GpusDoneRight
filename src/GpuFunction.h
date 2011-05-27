@@ -72,19 +72,28 @@ CUresult 	cuLaunch (CUfunction f)
 		//! Launches a CUDA function.
 		void launchGrid(int grid_width, int grid_height) const
 		{
-			if (!argumentsHaveBeenPassed_) 
-				throw std::runtime_error("You need to pass arguments before a launch is possible\n");
-
+			checkForArguments();
 			CUresult error = cuLaunchGrid(hfunc_,grid_width,grid_height);
 			ApiWrapper::check("cuLaunchGrid",error,verbose_);
 		}
- 	
-/*
-CUresult 	cuLaunchGridAsync (CUfunction f, int grid_width, int grid_height, CUstream hStream)
- 	Launches a CUDA function. 
-*/
+ 
+		//! Launches a CUDA function.
+		template<typename SomeGpuStreamType>
+		void launchGridAsync(int grid_width, int grid_height,const SomeGpuStreamType& stream) const	
+		{
+			checkForArguments();
+			CUresult error = cuLaunchGridAsync(hfunc_, grid_width,  grid_height, stream());
+			ApiWrapper::check("cuLaunchGrid",error,verbose_);
+ 		}
 
 	private:
+	
+		void checkForArguments() const
+		{
+			if (!argumentsHaveBeenPassed_) 
+				throw std::runtime_error("You need to pass arguments before a launch is possible\n");
+		}
+
 		const ModuleType& module_; // need to hold a const ref. for checking arguments
 		bool verbose_;
 		bool argumentsHaveBeenPassed_;

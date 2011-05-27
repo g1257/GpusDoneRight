@@ -1,8 +1,6 @@
-
 GpusDoneRight(tm) is free software, see file LICENSE.
 
 --------------------------------------------------------------------------------
-
 GpusDoneRight(tm) is a collection of C++ classes (in .h files)
 to simplify the programming of GPUs.
 We are using the low-level driver API, so that the (CPU)
@@ -13,7 +11,6 @@ GPU kernels go in a separate .cu file; they are usually
 compiled using nvcc into a .ptx file.
 
 --------------------------------------------------------------------------------
-
 Dependencies:
 * GNU C++ compiler
 * The low-level driver API, i.e., basically the cuda.h include
@@ -22,15 +19,14 @@ file and the library libcuda.so
 * PsimagLite ( https://github.com/g1257/PsimagLite/ )
 
 --------------------------------------------------------------------------------
-
 Quick Start.
 cd examples/
 make simpleQuery
 ./simpleQuery
 make addTwoVectors
 ./addTwoVectors
---------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
 What's not done right.
 Unfortunately, NVIDIA and ATI GPU architectures are closed. Therefore, the
 GPU kernel(s) cannot be written in C, or in C++ (or in D...).
@@ -40,11 +36,11 @@ However, all this is isolated to the kernel code only. All our GpusDoneRight
 wrapper is standard C++ (without language extensions)
 
 --------------------------------------------------------------------------------
-A request for NVIDIA and ATI:
+A request to NVIDIA and ATI:
 
 We, as developers, kindly request that NVIDIA and ATI release the specs
 of their GPUs so that GNU C/C++ developers (and others) can generate 
 GPU kernel code with their backend compilers.
-This way, everything will be done right(tm).
+This way, everything can be done right.
 --------------------------------------------------------------------------------
 

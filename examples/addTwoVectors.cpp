@@ -23,16 +23,15 @@ std::string verifyResult(
 {
 	size_t i = 0;
 	for (i = 0; i <hostA.size(); ++i) {
-        RealType sum = hostA[i] + hostB[i];
-        if (fabs(hostC[i] - sum) > 1e-7f)
-            break;
+ 		RealType sum = hostA[i] + hostB[i];
+		if (fabs(hostC[i] - sum) > 1e-7f) break;
     }
-     return (i == hostA.size()) ? "PASSED" : "FAILED";
+	return (i == hostA.size()) ? "PASSED" : "FAILED";
 }
     
 int main(int argc,char *argv[])
 {
-	// Cuda init and module load
+	// Cuda init
 	CudaType cuda;
 	std::string s = cuda.toString();
 	std::cout<<s<<"--------------------\n";

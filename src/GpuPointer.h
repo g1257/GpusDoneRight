@@ -31,6 +31,11 @@ namespace GpusDoneRight {
 
 		}
 		
+//		void setTo(const ValueType& val)
+//		{
+//			cudaMemset(deviceA, 0, nbytes); // set device memory to all 0s, for testing correctness
+//		} 
+		
 		//! Should return a pointer to this or something like that, FIXME
 		void operator=(const std::vector<ValueType>& hostVector)
 		{
@@ -52,6 +57,10 @@ namespace GpusDoneRight {
 			ApiWrapper::check("cuParamSetv",error,verbose_);
 			return sizeof(ptr);
 		}
+		
+		/* CUresult 	cuMemcpyDtoHAsync (void *dstHost, CUdeviceptr srcDevice, unsigned int ByteCount, CUstream hStream)
+ 	Copies memory from Device to Host. 
+		*/
 		
 	private:
 		bool verbose_;

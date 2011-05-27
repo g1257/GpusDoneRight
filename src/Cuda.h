@@ -42,8 +42,7 @@ namespace GpusDoneRight {
 				devices_[i] = 0;
 			}
 		}
-		
-		
+
 		const CUdevice& getDevice(size_t i) const
 		{
 			return devices_[i]->get();
@@ -58,6 +57,23 @@ namespace GpusDoneRight {
 				msg << devices_[i]->toString();
 			return msg.str();
 		}
+		
+		const char* name(size_t i) const { return devices_[i]->name(); }
+		
+		int  majorVersion(size_t i) const { return devices_[i]->majorVersion(); }
+
+		int  minorVersion(size_t i) const { return devices_[i]->minorVersion(); }
+
+		unsigned int globalMem(size_t i) const { return devices_[i]->globalMem();}
+		
+		int getProperty(size_t i,size_t prop) const { return devices_[i]->getProperty(prop); }
+		
+		// FIXME: don't expose type CUdevice_attribute
+		int getAttribute(size_t i,CUdevice_attribute attrib) const
+		{
+			return devices_[i]->getAttribute(attrib);
+		}
+		
 	private:
 
 		int getDeviceCount()
