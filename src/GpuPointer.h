@@ -31,6 +31,7 @@ namespace GpusDoneRight {
 
 		}
 		
+		//! Should return a pointer to this or something like that, FIXME
 		void operator=(const std::vector<ValueType>& hostVector)
 		{
 			CUresult error = cuMemcpyHtoD (gpuPtr_, &(hostVector[0]), allocatedBytes_);
@@ -41,6 +42,15 @@ namespace GpusDoneRight {
 		{
 			CUresult error = cuMemcpyDtoH(&(hostVector[0]),gpuPtr_,allocatedBytes_);
 			ApiWrapper::check("cuMemcpyDtoH",error,verbose_);
+		}
+		
+		size_t passToGpuFunction(CUfunction& hfunc,int offset) const
+		{
+			void *ptr = (void*)(size_t)gpuPtr_;
+			ALIGN_UP(offset, __alignof(ptr));
+			CUresult error = cuParamSetv(hfunc, offset, &ptr, sizeof(ptr));
+			ApiWrapper::check("cuParamSetv",error,verbose_);
+			return sizeof(ptr);
 		}
 		
 	private:

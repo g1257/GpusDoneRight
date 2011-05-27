@@ -21,6 +21,9 @@
 
 #include <cuda.h>
 
+#define ALIGN_UP(offset, alignment) \
+	 (offset) = ((offset) + (alignment) - 1) & ~((alignment) - 1)
+
 namespace GpusDoneRight {
 	class ApiWrapper {
 	
