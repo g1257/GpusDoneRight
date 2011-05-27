@@ -18,8 +18,7 @@ Dependencies:
 * GNU C++ compiler
 * The low-level driver API, i.e., basically the cuda.h include
 file and the library libcuda.so
-* the nvcc compiler to create the .ptx file for the GPU kernel(s). More on kernels
-coming soon...
+* the nvcc compiler to create the .ptx file for the GPU kernel(s). 
 * PsimagLite ( https://github.com/g1257/PsimagLite/ )
 
 --------------------------------------------------------------------------------
@@ -28,5 +27,24 @@ Quick Start.
 cd examples/
 make simpleQuery
 ./simpleQuery
+make addTwoVectors
+./addTwoVectors
+--------------------------------------------------------------------------------
+
+What's not done right.
+Unfortunately, NVIDIA and ATI GPU architectures are closed. Therefore, the
+GPU kernel(s) cannot be written in C, or in C++ (or in D...).
+They have to be written in NVIDIA's proprietary language extensions, and
+compiled into a .ptx file with nvcc.
+However, all this is isolated to the kernel code only. All our GpusDoneRight
+wrapper is standard C++ (without language extensions)
+
+--------------------------------------------------------------------------------
+A request for NVIDIA and ATI:
+
+We, as developers, kindly request that NVIDIA and ATI release the specs
+of their GPUs so that GNU C/C++ developers (and others) can generate 
+GPU kernel code with their backend compilers.
+This way, everything will be done right(tm).
 --------------------------------------------------------------------------------
 
