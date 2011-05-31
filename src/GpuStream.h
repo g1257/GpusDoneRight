@@ -41,10 +41,15 @@ namespace GpusDoneRight {
 		const CUstream& operator()() const { return hStream_; }
 		
 	/* CUresult 	cuStreamQuery (CUstream hStream)
- 	Determine status of a compute stream.
-CUresult 	cuStreamSynchronize (CUstream hStream)
- 	Wait until a stream's tasks are completed. */
- 
+ 	Determine status of a compute stream.*/
+ 	
+ 		//! Wait until a stream's tasks are completed.
+		void synchronize()
+		{
+			CUresult error = cuStreamSynchronize(hStream_);
+			ApiWrapper::check("cuStreamSynchronize",error,verbose_);
+		}
+ 	
 	private:
 		bool verbose_;
 		CUstream hStream_; // we own this

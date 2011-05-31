@@ -96,7 +96,7 @@ CUresult 	cuLaunch (CUfunction f)
 		{
 			checkForArguments();
 			CUresult error = cuLaunchGridAsync(hfunc_, grid_width,  grid_height, stream());
-			ApiWrapper::check("cuLaunchGrid",error,verbose_);
+			ApiWrapper::check("cuLaunchGridAsync",error,verbose_);
  		}
 
 	private:

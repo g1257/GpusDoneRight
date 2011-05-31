@@ -47,7 +47,7 @@ namespace GpusDoneRight {
 		{
 			// Create context
 			CUresult error = cuCtxCreate(&cuContext_, flags, handle);
-    			ApiWrapper::check("cuCtxCreate",error,verbose_);
+			ApiWrapper::check("cuCtxCreate",error,verbose_);
 		}
 		
 		// Using RAII here:
@@ -56,6 +56,12 @@ namespace GpusDoneRight {
 			CUresult error = cuCtxDetach(cuContext_);
 			// Let's not throw in the destructor:
 			ApiWrapper::check("cuCtxCreate",error,verbose_,ApiWrapper::DO_NOT_THROW);
+		}
+		
+		void synchronize()
+		{
+			CUresult error = cuCtxSynchronize();
+			ApiWrapper::check("cuCtxSynchronize",error,verbose_);
 		}
 	private:
 		bool verbose_;
