@@ -71,7 +71,7 @@ int main(int argc,char *argv[])
 	// Kernel function preparation
 	ModuleType module("streams.ptx");
 	size_t nreps = 10;                 // number of times each experiment is repeated
-	//size_t nIterations = (cuda.minorVersion(0) > 1) ? 5 : 1;
+	size_t nIterations = (cuda.minorVersion(0) > 1) ? 5 : 1;
 	size_t threadsPerBlock = 512;
 	size_t blocksPerGrid = (n + threadsPerBlock - 1) / threadsPerBlock;
 		
@@ -79,7 +79,8 @@ int main(int argc,char *argv[])
 		// asynchronously launch nstreams kernels, each operating on its own portion of data
 		for (size_t i = 0; i < streams.size(); i++) {
 			GpuFunctionType init_array(module,"init_array");
-			//init_array.passArguments(deviceA + i * n / nstreams,deviceC,nIterations);
+			deviceA.setOffset(i*n/streams.size());
+			init_array.passArguments(deviceA,deviceC,nIterations);
 			init_array.setBlockShape(threadsPerBlock, 1, 1);
 			init_array.launchGridAsync(blocksPerGrid, 1,streams[i]);
 		}
@@ -87,6 +88,8 @@ int main(int argc,char *argv[])
 		// asynchronoously launch nstreams memcopies.  Note that memcopy in stream x will only
 		//   commence executing when all previous CUDA calls in stream x have completed
 		for (size_t i = 0; i < streams.size(); i++) {
+			deviceA.setOffset(i*n/streams.size());
+			//deviceA.copyToHost(a,streams[i],i*n/nstreams,nbytes/nstreams);
 			//cudaMemcpyAsync(a + i * n / nstreams, d_a + i * n / nstreams, nbytes / nstreams, cudaMemcpyDeviceToHost, streams[i]);
 		}
 	}

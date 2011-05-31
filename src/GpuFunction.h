@@ -36,6 +36,19 @@ namespace GpusDoneRight {
 		
 		//! Write on passArguments for 1 arg, 2 arg, 3 arg, etc
 		//! Here we need to check against the ptx file FIXME
+		template<typename Arg1Type,typename Arg2Type,typename Arg3Type>
+		void passArguments(
+				const Arg1Type& arg1,
+				const Arg2Type& arg2,
+				const Arg3Type& arg3)
+		{
+			Arguments arguments(hfunc_,verbose_);
+			arguments.pass(arg1);
+			arguments.pass(arg2);
+			arguments.pass(arg3);
+			argumentsHaveBeenPassed_ = true;
+		}
+		
 		template<typename Arg1Type,typename Arg2Type,typename Arg3Type,
 			typename Arg4Type>
 		void passArguments(

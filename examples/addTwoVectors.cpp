@@ -50,8 +50,8 @@ int main(int argc,char *argv[])
 	GpuPointerType deviceA(n),deviceB(n),deviceC(n);
 	
 	// Copy of memory from host to device
-	deviceA = hostA;
-	deviceB = hostB;
+	deviceA.copyFromHost(hostA);
+	deviceB.copyFromHost(hostB);
 	
 	// Kernel function preparation
 	ModuleType module("addTwoVectors.ptx");

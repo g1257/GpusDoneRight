@@ -42,7 +42,7 @@ namespace GpusDoneRight {
  			ApiWrapper::check("cuParamSeti",error,verbose_);
  			incrementOffset(sizeof(x));
 		}
-		
+
 		template<typename SomeRealType>
 		void pass(const GpuPointer<SomeRealType>& gpuPtr)
 		{

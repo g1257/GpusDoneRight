@@ -24,7 +24,7 @@ namespace GpusDoneRight {
 	class GpuPointer {
 	public:
 		GpuPointer(size_t n,bool verbose = true) : 
-			verbose_(verbose),allocatedBytes_(n * sizeof(ValueType))
+			verbose_(verbose),allocatedBytes_(n * sizeof(ValueType)),offsetDevice_(0)
 		{
 			CUresult error = cuMemAlloc(&gpuPtr_,allocatedBytes_);
 			ApiWrapper::check("cuMemAlloc",error,verbose_);
@@ -35,20 +35,41 @@ namespace GpusDoneRight {
 //		{
 //			cudaMemset(deviceA, 0, nbytes); // set device memory to all 0s, for testing correctness
 //		} 
+
+		void setOffset(size_t x) { offsetDevice_ = x; }
 		
-		//! Should return a pointer to this or something like that, FIXME
-		void operator=(const std::vector<ValueType>& hostVector)
+		void copyFromHost(
+				const std::vector<ValueType>& hostVector,
+				size_t offsetHost = 0,
+				int byteCount = -1)
 		{
-			CUresult error = cuMemcpyHtoD (gpuPtr_, &(hostVector[0]), allocatedBytes_);
+			if (byteCount<0) byteCount = allocatedBytes_;
+			CUresult error = cuMemcpyHtoD (gpuPtr_ + offsetDevice_, &(hostVector[offsetHost]), byteCount);
  			ApiWrapper::check("cuMemcpyHtoD",error,verbose_);
 		}
 		
-		void copyToHost(std::vector<ValueType>& hostVector) const
+		void copyToHost(
+				std::vector<ValueType>& hostVector,
+				size_t offsetHost = 0,
+				int byteCount = -1) const
 		{
-			CUresult error = cuMemcpyDtoH(&(hostVector[0]),gpuPtr_,allocatedBytes_);
+			if (byteCount<0) byteCount = allocatedBytes_;
+			CUresult error = cuMemcpyDtoH(&(hostVector[offsetHost]),gpuPtr_+offsetDevice_,byteCount);
 			ApiWrapper::check("cuMemcpyDtoH",error,verbose_);
 		}
 		
+		template<typename SomeGpuStreamType>
+		void copyToHostAsync(
+					std::vector<ValueType>& hostVector,
+					SomeGpuStreamType& hstream,
+					size_t offsetHost = 0,
+					int byteCount = -1) const
+		{
+			if (byteCount<0) byteCount = allocatedBytes_;
+			CUresult error = cuMemcpyDtoHAsync(&(hostVector[offsetHost]),gpuPtr_+offsetDevice_, byteCount, hstream);
+			ApiWrapper::check("cuMemcpyDtoHAsync",error,verbose_);
+		}
+
 		size_t passToGpuFunction(CUfunction& hfunc,int offset) const
 		{
 			void *ptr = (void*)(size_t)gpuPtr_;
@@ -58,14 +79,12 @@ namespace GpusDoneRight {
 			return sizeof(ptr);
 		}
 		
-		/* CUresult 	cuMemcpyDtoHAsync (void *dstHost, CUdeviceptr srcDevice, unsigned int ByteCount, CUstream hStream)
- 	Copies memory from Device to Host. 
-		*/
 		
 	private:
 		bool verbose_;
 		CUdeviceptr gpuPtr_;
 		unsigned int allocatedBytes_;
+		size_t offsetDevice_;
 	}; // class GpuPointer
 	
 } // end namespace GpusDoneRight
