@@ -61,44 +61,50 @@ int main(int argc,char *argv[])
 	std::vector<FieldType> zeroVector(n,static_cast<FieldType>(0));
 	deviceA.copyFromHost(zeroVector);
 	//cudaMemset(deviceA, 0, nbytes); // set device memory to all 0s, for testing correctness
-	
+
 	// Copy of memory from host to device
 	deviceC.copyFromHost(c);
-	
+
 	// Create streams
-	size_t nStreams = 1;               // number of streams for CUDA calls
-	//std::vector<GpuStreamType> streams(nStreams);
-	
+	size_t nStreams = 4;               // number of streams for CUDA calls
+	std::vector<GpuStreamType*> streams(nStreams);
+
+	for (size_t i = 0; i < streams.size(); i++) streams[i] = new GpuStreamType();
+
 	// Kernel function preparation
 	ModuleType module("streams.ptx");
 	size_t nreps = 1;                 // number of times each experiment is repeated
 	size_t nIterations = (cuda.minorVersion(0) > 1) ? 5 : 1;
 	size_t threadsPerBlock = 512;
-	size_t blocksPerGrid = (n + threadsPerBlock - 1) / threadsPerBlock;
+	size_t blocksPerGrid = 100; //(n + threadsPerBlock - 1) / threadsPerBlock;
 
 	for (size_t k = 0; k < nreps; k++) {
 		// asynchronously launch nstreams kernels, each operating on its own portion of data
 		for (size_t i = 0; i < nStreams; i++) {
 			GpuFunctionType initArray(module,"initArray");
 			deviceA.setOffset(i*nbytes/nStreams);
-			initArray.passArguments(deviceA,deviceC,nIterations);
+			initArray.passArguments(deviceA,deviceC,nIterations,n);
 			initArray.setBlockShape(threadsPerBlock, 1, 1);
-			//initArray.launchGridAsync(blocksPerGrid, 1,streams[i]);
-			initArray.launchGrid(blocksPerGrid, 1);
+			std::cerr<<"Trying to launch kernel...\n";
+			initArray.launchGridAsync(blocksPerGrid, 1,*(streams[i]));
+			//initArray.launchGrid(blocksPerGrid, 1);
 		}
-		 
+ 
 		// asynchronoously launch nstreams memcopies.  Note that memcopy in stream x will only
 		//   commence executing when all previous CUDA calls in stream x have completed
 		for (size_t i = 0; i < nStreams; i++) {
 			deviceA.setOffset(i*nbytes/nStreams);
-			deviceA.copyToHost(a,i*nbytes/nStreams,nbytes/nStreams);
-			//deviceA.copyToHostAsync(a,streams[i],i*nbytes/streams.size(),nbytes/nStreams);
+			//deviceA.copyToHost(a,i*n/nStreams,nbytes/nStreams);
+			deviceA.copyToHostAsync(a,*(streams[i]),i*n/streams.size(),nbytes/nStreams);
 		}
 	}
 
-	//for (size_t i = 0; i < streams.size(); i++) streams[i].synchronize();
+	for (size_t i = 0; i < nStreams; i++) streams[i]->synchronize();
 
 	context.synchronize();
 
 	std::cout<<verifyResult(a,n,c)<<"\n";
+
+	for (size_t i = 0; i < streams.size(); i++) delete streams[i];
 }
+

@@ -100,27 +100,31 @@ namespace GpusDoneRight {
 					int byteCount = -1) const
 		{
 			if (byteCount<0) byteCount = allocatedBytes_;
-			CUresult error = cuMemcpyDtoHAsync(hostVector + offsetHost,gpuPtr_+offsetDevice_, byteCount, hstream());
+			if (offsetDevice_ + byteCount > allocatedBytes_) throw std::runtime_error(
+				"GpuPointer::copyToHostAsync(...): out of range\n");
+			CUdeviceptr newPtr = gpuPtr_ + offsetDevice_;
+			ValueType* newHptr = hostVector + offsetHost;
+			CUresult error = cuMemcpyDtoHAsync(newHptr,newPtr, byteCount, hstream());
 			ApiWrapper::check("cuMemcpyDtoHAsync",error,verbose_);
 		}
 
 		size_t passToGpuFunction(CUfunction& hfunc,int offset) const
 		{
-			void *ptr = (void*)(size_t)(gpuPtr_+offsetDevice_);
+			CUdeviceptr newPtr = gpuPtr_ + offsetDevice_;
+			void *ptr = (void*)(size_t)(newPtr);
 			ALIGN_UP(offset, __alignof(ptr));
 			CUresult error = cuParamSetv(hfunc, offset, &ptr, sizeof(ptr));
 			ApiWrapper::check("cuParamSetv",error,verbose_);
 			return sizeof(ptr);
 		}
-		
-		
+
 	private:
 		bool verbose_;
 		CUdeviceptr gpuPtr_;
 		unsigned int allocatedBytes_;
 		size_t offsetDevice_;
 	}; // class GpuPointer
-	
+
 } // end namespace GpusDoneRight
 
 /*@}*/

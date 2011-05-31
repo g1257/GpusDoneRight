@@ -32,8 +32,7 @@ namespace GpusDoneRight {
 			CUresult error = cuParamSetSize(hfunc_, offset_);
 			ApiWrapper::check("cuParamSetSize",error,verbose_,ApiWrapper::DO_NOT_THROW);
 		}
-			
-		 
+
 		//! add one pass function per type below
 		void pass(int x)
 		{

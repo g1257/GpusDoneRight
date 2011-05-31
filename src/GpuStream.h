@@ -25,7 +25,7 @@ namespace GpusDoneRight {
 	public:
 		GpuStream(bool verbose = true) : verbose_(verbose)
 		{
-			// Create context
+			std::cerr<<"Calling constructor for stream\n";
 			CUresult error = cuStreamCreate(&hStream_,0);
     		ApiWrapper::check("cuStreamCreate",error,verbose_);
 		}
@@ -33,6 +33,7 @@ namespace GpusDoneRight {
 		// Using RAII here:
 		~GpuStream()
 		{
+			std::cerr<<"Calling destructor for stream\n";
 			CUresult error = cuStreamDestroy(hStream_);
 			// Let's not throw in the destructor:
 			ApiWrapper::check("cuStreamDestroy",error,verbose_,ApiWrapper::DO_NOT_THROW);
