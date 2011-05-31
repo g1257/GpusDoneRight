@@ -76,7 +76,7 @@ int main(int argc,char *argv[])
 	size_t nreps = 1;                 // number of times each experiment is repeated
 	size_t nIterations = (cuda.minorVersion(0) > 1) ? 5 : 1;
 	size_t threadsPerBlock = 512;
-	size_t blocksPerGrid = 100; //(n + threadsPerBlock - 1) / threadsPerBlock;
+	size_t blocksPerGrid = (n + threadsPerBlock*nStreams - 1) / (nStreams * threadsPerBlock);
 
 	for (size_t k = 0; k < nreps; k++) {
 		// asynchronously launch nstreams kernels, each operating on its own portion of data
