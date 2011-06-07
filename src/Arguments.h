@@ -1,3 +1,4 @@
+//-*-C++-*-
 /** \ingroup GpusDoneRight */
 /*@{*/
 
@@ -45,11 +46,16 @@ namespace GpusDoneRight {
 		template<typename SomeRealType>
 		void pass(const GpuPointer<SomeRealType>& gpuPtr)
 		{
-			size_t size1 = gpuPtr.passToGpuFunction(hfunc_,offset_);
-			incrementOffset(size1);
+			CUdeviceptr newPtr = gpuPtr.getCUdeviceptr();
+			void *ptr = (void*)(size_t)(newPtr);
+			ALIGN_UP(offset, __alignof(ptr));
+			CUresult error = cuParamSetv(hfunc_, offset, &ptr, sizeof(ptr));
+			ApiWrapper::check("cuParamSetv",error,verbose_);
+			incrementOffset(sizeof(ptr));
 		}
 		
 	private:
+
 		void incrementOffset(size_t size1)
 		{
 			offset_ += size1;
