@@ -63,12 +63,12 @@ namespace GpusDoneRight {
 		//======================================================================
 
 		void copyFromHost(const std::vector<ValueType>& hostVector,
-						  size_t offsetHost = 0,
-						  int byteCount = -1)
+						  size_t offsetHostInUnits = 0,
+						  int extent = -1)
 		{
-			if (byteCount<0) byteCount = allocatedBytes_;
+			size_t byteCount =  (extent<0) ? allocatedBytes_ : extent*sizeof(ValueType);
 			CUresult error = cuMemcpyHtoD (gpuPtr_ + offsetDevice_,
-										   &(hostVector[offsetHost]),
+										   &(hostVector[offsetHostInUnits]),
 										   byteCount);
  			ApiWrapper::check("cuMemcpyHtoD",error,verbose_);
 		}
@@ -76,24 +76,20 @@ namespace GpusDoneRight {
 		//======================================================================
 
 		void copyToHost(std::vector<ValueType>& hostVector,
-						size_t offsetHost = 0,
-						int byteCount = -1) const
+						size_t offsetHostInUnits = 0,
+						int extent = -1) const
 		{
-			if (byteCount<0) byteCount = allocatedBytes_;
-			CUresult error = cuMemcpyDtoH(&(hostVector[offsetHost]),
-										  gpuPtr_+offsetDevice_,
-										  byteCount);
-			ApiWrapper::check("cuMemcpyDtoH",error,verbose_);
+			return copyToHost(&(hostVector[offsetHostInUnits]),0,extent);
 		}
 
 		//======================================================================
 
 		void copyToHost(ValueType* hostVector,
-						size_t offsetHost = 0,
-						int byteCount = -1) const
+						size_t offsetHostInUnits = 0,
+						int extent = -1) const
 		{
-			if (byteCount<0) byteCount = allocatedBytes_;
-			CUresult error = cuMemcpyDtoH(hostVector + offsetHost,
+			size_t byteCount =  (extent<0) ? allocatedBytes_ : extent*sizeof(ValueType);
+			CUresult error = cuMemcpyDtoH(hostVector + offsetHostInUnits,
 										  gpuPtr_+offsetDevice_, 
 										  byteCount);
 			ApiWrapper::check("cuMemcpyDtoH",error,verbose_);

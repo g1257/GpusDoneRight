@@ -28,7 +28,7 @@ std::string verifyResult(const SomeFieldType* a, size_t n, int c)
 				ttos(c) + "\n";
     return "PASSED";
 }
-    
+
 int main(int argc,char *argv[])
 {
 	// Cuda init
@@ -57,8 +57,9 @@ int main(int argc,char *argv[])
 	cuMemAllocHost((void**)&hosta, nbytes);
 	memset(hosta, 255, nbytes);     // set host memory bits to all 1s, for testing correctness
 	
-	//std::vector<FieldType> hostA(n,255);
-	//mlock(&(hostA[0]),hostA.size()*sizeof(FieldType));
+// 	std::vector<FieldType> hostA(n,255);
+// 	int x = mlock(&(hostA[0]),hostA.size()*sizeof(FieldType));
+// 	if (x<0) throw std::runtime_error("mlock failed\n");
 
 	// Device Memory allocation
 	// allocate device memory
@@ -99,7 +100,7 @@ int main(int argc,char *argv[])
 		//   commence executing when all previous CUDA calls in stream x have completed
 		for (size_t i = 0; i < nStreams; i++) {
 			deviceA.setOffset(i*n/nStreams);
-			//deviceA.copyToHost(a,i*n/nStreams,nbytes/nStreams);
+			//deviceA.copyToHost(a,i*n/nStreams,n/nStreams);
 			deviceA.copyToHostAsync(hosta,*(streams[i]),i*n/streams.size(),n/nStreams);
 		}
 	}
