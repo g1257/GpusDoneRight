@@ -48,8 +48,8 @@ namespace GpusDoneRight {
 		{
 			CUdeviceptr newPtr = gpuPtr.getCUdeviceptr();
 			void *ptr = (void*)(size_t)(newPtr);
-			ALIGN_UP(offset, __alignof(ptr));
-			CUresult error = cuParamSetv(hfunc_, offset, &ptr, sizeof(ptr));
+			ALIGN_UP(offset_, __alignof(ptr));
+			CUresult error = cuParamSetv(hfunc_, offset_, &ptr, sizeof(ptr));
 			ApiWrapper::check("cuParamSetv",error,verbose_);
 			incrementOffset(sizeof(ptr));
 		}

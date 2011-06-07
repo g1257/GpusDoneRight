@@ -39,7 +39,7 @@ namespace GpusDoneRight {
 		//======================================================================
 
 		size_t allocatedBytes() const {  return allocatedBytes_; }
-		
+
 		//======================================================================
 
 		void setOffset(size_t x) { offsetDevice_ = x; }
@@ -48,14 +48,14 @@ namespace GpusDoneRight {
 
 		void copyFromHost(const ValueType& hostVal)
 		{
-			static const std::string errorMsg 
+			static const std::string errorMsg
 				= "GpuPointer::copyFromHost(...) expecting size 1 pointer\n";
 
-			if (allocatedBytes_!=sizeof(ValueType)) 
+			if (allocatedBytes_!=sizeof(ValueType))
 				throw std::runtime_error(errorMsg);
 			
-			CUresult error = cuMemcpyHtoD (gpuPtr_ + offsetDevice_, 
-										   &hostVal, 
+			CUresult error = cuMemcpyHtoD (gpuPtr_ + offsetDevice_,
+										   &hostVal,
 										   allocatedBytes_);
  			ApiWrapper::check("cuMemcpyHtoD",error,verbose_);
 		}
@@ -67,8 +67,8 @@ namespace GpusDoneRight {
 						  int byteCount = -1)
 		{
 			if (byteCount<0) byteCount = allocatedBytes_;
-			CUresult error = cuMemcpyHtoD (gpuPtr_ + offsetDevice_, 
-										   &(hostVector[offsetHost]), 
+			CUresult error = cuMemcpyHtoD (gpuPtr_ + offsetDevice_,
+										   &(hostVector[offsetHost]),
 										   byteCount);
  			ApiWrapper::check("cuMemcpyHtoD",error,verbose_);
 		}
@@ -85,7 +85,7 @@ namespace GpusDoneRight {
 										  byteCount);
 			ApiWrapper::check("cuMemcpyDtoH",error,verbose_);
 		}
-		
+
 		//======================================================================
 
 		void copyToHost(ValueType* hostVector,
@@ -98,7 +98,7 @@ namespace GpusDoneRight {
 										  byteCount);
 			ApiWrapper::check("cuMemcpyDtoH",error,verbose_);
 		}
-		
+
 		//======================================================================
 
 		template<typename SomeGpuStreamType>
@@ -116,14 +116,14 @@ namespace GpusDoneRight {
 		}
 
 		//======================================================================
-		
+
 		template<typename SomeGpuStreamType>
 		void copyToHostAsync(ValueType* hostVector,
 							 SomeGpuStreamType& hstream,
 							 size_t offsetHost = 0,
 							 int byteCount = -1) const
 		{
-			static const string errorMsg =
+			static const std::string errorMsg =
 				"GpuPointer::copyToHostAsync(...): out of range\n";
 			if (byteCount<0) 
 				byteCount = allocatedBytes_;
@@ -139,11 +139,11 @@ namespace GpusDoneRight {
 											   hstream());
 			ApiWrapper::check("cuMemcpyDtoHAsync",error,verbose_);
 		}
-		
+
 		//======================================================================
 
-		CUdeviceptr getCUdeviceptr() const { return gpuPtr_ + offsetDevice_;)
-		
+		CUdeviceptr getCUdeviceptr() const { return gpuPtr_ + offsetDevice_; }
+
 		//======================================================================
 
 		private:
