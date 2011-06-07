@@ -42,8 +42,8 @@ namespace GpusDoneRight {
 
 		//======================================================================
 
-		void setOffset(size_t x) { offsetDevice_ = x; }
-		
+		void setOffset(size_t x) { offsetDevice_ = x * sizeof(ValueType); }
+
 		//======================================================================
 
 		void copyFromHost(const ValueType& hostVal)
@@ -104,15 +104,10 @@ namespace GpusDoneRight {
 		template<typename SomeGpuStreamType>
 		void copyToHostAsync(std::vector<ValueType>& hostVector,
 							 SomeGpuStreamType& hstream,
-							 size_t offsetHost = 0,
-							 int byteCount = -1) const
+							 size_t offsetHostInUnits = 0,
+							 int extent = -1) const
 		{
-			if (byteCount<0) byteCount = allocatedBytes_;
-			CUresult error = cuMemcpyDtoHAsync(&(hostVector[offsetHost]),
-											   gpuPtr_+offsetDevice_, 
-											   byteCount, 
-											   hstream());
-			ApiWrapper::check("cuMemcpyDtoHAsync",error,verbose_);
+			return copyToHostAsync(&(hostVector[offsetHostInUnits]),hstream,0,extent);
 		}
 
 		//======================================================================
@@ -120,19 +115,18 @@ namespace GpusDoneRight {
 		template<typename SomeGpuStreamType>
 		void copyToHostAsync(ValueType* hostVector,
 							 SomeGpuStreamType& hstream,
-							 size_t offsetHost = 0,
-							 int byteCount = -1) const
+							 size_t offsetHostInUnits = 0,
+							 int extent = -1) const
 		{
 			static const std::string errorMsg =
 				"GpuPointer::copyToHostAsync(...): out of range\n";
-			if (byteCount<0) 
-				byteCount = allocatedBytes_;
+			size_t byteCount =  (extent<0) ? allocatedBytes_ : extent*sizeof(ValueType);
 
 			if (offsetDevice_ + byteCount > allocatedBytes_) 
 				throw std::runtime_error(errorMsg);
 
 			CUdeviceptr newPtr = gpuPtr_ + offsetDevice_;
-			ValueType* newHptr = hostVector + offsetHost;
+			ValueType* newHptr = hostVector + offsetHostInUnits;
 			CUresult error = cuMemcpyDtoHAsync(newHptr,
 											   newPtr, 
 											   byteCount, 

@@ -7,6 +7,7 @@
 #include "GpuStream.h"
 #include "Random48.h" // in PsimagLite
 #include "Vector.h" // in PsimagLite
+#include <sys/mman.h> // for mlock
 
 typedef GpusDoneRight::Device DeviceType;
 typedef GpusDoneRight::Cuda<DeviceType> CudaType;
@@ -18,7 +19,8 @@ typedef GpusDoneRight::GpuFunction<ModuleType> GpuFunctionType;
 typedef int FieldType;
 typedef GpusDoneRight::GpuPointer<FieldType> GpuPointerType;
 
-std::string verifyResult(int *a, size_t n, int c)
+template<typename SomeFieldType>
+std::string verifyResult(const SomeFieldType* a, size_t n, int c)
 {
 	for (size_t i = 0; i < n; i++)
         if (a[i] != c)
@@ -43,18 +45,21 @@ int main(int argc,char *argv[])
 	 
 	// Anything that is less than 4 SM's will be scaled down in terms of workload
 	float multiProcCount = cuda.getAttribute(deviceNumber,CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT);
-    float scale_factor = std::max(4.0f / multiProcCount, 1.0f);
-    n = size_t (n / scale_factor);
+	float scale_factor = std::max(4.0f / multiProcCount, 1.0f);
+	n = size_t (n / scale_factor);
 	std::cout<<"> scale_factor = "<<(1.0f/scale_factor)<<"\n";
-    std::cout<<"> array_size   = "<<n<<"\n";
+	std::cout<<"> array_size   = "<<n<<"\n";
 	
 	// Host memory allocation
 	int c = 5;                      // value to which the array will be initialized
-	FieldType *a = 0;
+	FieldType *hosta = 0;
 	int nbytes = n * sizeof(FieldType);   // number of data bytes
-	cuMemAllocHost((void**)&a, nbytes);
-	memset(a, 255, nbytes);     // set host memory bits to all 1s, for testing correctness
+	cuMemAllocHost((void**)&hosta, nbytes);
+	memset(hosta, 255, nbytes);     // set host memory bits to all 1s, for testing correctness
 	
+	//std::vector<FieldType> hostA(n,255);
+	//mlock(&(hostA[0]),hostA.size()*sizeof(FieldType));
+
 	// Device Memory allocation
 	// allocate device memory
 	GpuPointerType deviceA(n),deviceC(1);
@@ -82,7 +87,7 @@ int main(int argc,char *argv[])
 		// asynchronously launch nstreams kernels, each operating on its own portion of data
 		for (size_t i = 0; i < nStreams; i++) {
 			GpuFunctionType initArray(module,"initArray");
-			deviceA.setOffset(i*nbytes/nStreams);
+			deviceA.setOffset(i*n/nStreams);
 			initArray.passArguments(deviceA,deviceC,nIterations,n);
 			initArray.setBlockShape(threadsPerBlock, 1, 1);
 			std::cerr<<"Trying to launch kernel...\n";
@@ -93,9 +98,9 @@ int main(int argc,char *argv[])
 		// asynchronoously launch nstreams memcopies.  Note that memcopy in stream x will only
 		//   commence executing when all previous CUDA calls in stream x have completed
 		for (size_t i = 0; i < nStreams; i++) {
-			deviceA.setOffset(i*nbytes/nStreams);
+			deviceA.setOffset(i*n/nStreams);
 			//deviceA.copyToHost(a,i*n/nStreams,nbytes/nStreams);
-			deviceA.copyToHostAsync(a,*(streams[i]),i*n/streams.size(),nbytes/nStreams);
+			deviceA.copyToHostAsync(hosta,*(streams[i]),i*n/streams.size(),n/nStreams);
 		}
 	}
 
@@ -103,7 +108,7 @@ int main(int argc,char *argv[])
 
 	context.synchronize();
 
-	std::cout<<verifyResult(a,n,c)<<"\n";
+	std::cout<<verifyResult(hosta,n,c)<<"\n";
 
 	for (size_t i = 0; i < streams.size(); i++) delete streams[i];
 }
