@@ -29,7 +29,7 @@ namespace GpusDoneRight {
 		typedef const void* const_pointer;
 		// reference to void members are impossible.
 		typedef void value_type;
-		template <class U> struct rebind { typedef allocator<U>
+		template <class U> struct rebind { typedef HostAllocator<U>
 		other; };
 	}; // class HostAllocator
 
@@ -42,7 +42,7 @@ namespace GpusDoneRight {
 		typedef T&        reference;
 		typedef const T&  const_reference;
 		typedef T         value_type;
-		template <class U> struct rebind { typedef allocator<U>
+		template <class U> struct rebind { typedef HostAllocator<U>
 		other; };
 
 		HostAllocator() throw() { }
@@ -50,7 +50,7 @@ namespace GpusDoneRight {
 		HostAllocator(const HostAllocator&) throw() { }
 
 		template <class U>
-		HostAllocator(const allocator<U>&) throw() { }
+		HostAllocator(const HostAllocator<U>&) throw() { }
 
 		~HostAllocator() throw() { }
 
@@ -60,8 +60,8 @@ namespace GpusDoneRight {
 
 		pointer allocate(size_type n,void* = 0)
 		{
-			if (n>this->maxSize()) throw
-					runtime_error("Bad allocation\n");
+			if (n>this->max_size()) throw
+					std::runtime_error("Bad allocation\n");
 
 			pointer x = 0;
 			cuMemAllocHost((void**)&x, n*sizeof(T));

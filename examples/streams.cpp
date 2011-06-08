@@ -7,7 +7,7 @@
 #include "GpuStream.h"
 #include "Random48.h" // in PsimagLite
 #include "Vector.h" // in PsimagLite
-#include <sys/mman.h> // for mlock
+#include "HostAllocator.h"
 
 typedef GpusDoneRight::Device DeviceType;
 typedef GpusDoneRight::Cuda<DeviceType> CudaType;
@@ -56,8 +56,8 @@ int main(int argc,char *argv[])
 	//int nbytes = n * sizeof(FieldType);   // number of data bytes
 	//cuMemAllocHost((void**)&hosta, nbytes);
 	//memset(hosta, 255, nbytes);     // set host memory bits to all 1s, for testing correctness
-	
- 	std::vector<FieldType,GpusDoneRight::HostAllocator> hostA(n,255);
+	typedef GpusDoneRight::HostAllocator<FieldType> HostAllocatorType;
+	std::vector<FieldType,HostAllocatorType> hostA(n,255);
 // 	int x = mlock(&(hostA[0]),hostA.size()*sizeof(FieldType));
 // 	if (x<0) throw std::runtime_error("mlock failed\n");
 
@@ -101,7 +101,7 @@ int main(int argc,char *argv[])
 		for (size_t i = 0; i < nStreams; i++) {
 			deviceA.setOffset(i*n/nStreams);
 			//deviceA.copyToHost(a,i*n/nStreams,n/nStreams);
-			deviceA.copyToHostAsync(hosta,*(streams[i]),i*n/streams.size(),n/nStreams);
+			deviceA.copyToHostAsync(&(hostA[0]),*(streams[i]),i*n/streams.size(),n/nStreams);
 		}
 	}
 
@@ -109,7 +109,7 @@ int main(int argc,char *argv[])
 
 	context.synchronize();
 
-	std::cout<<verifyResult(hosta,n,c)<<"\n";
+	std::cout<<verifyResult(&(hostA[0]),n,c)<<"\n";
 
 	for (size_t i = 0; i < streams.size(); i++) delete streams[i];
 }
