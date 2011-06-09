@@ -17,7 +17,7 @@
 #include <iostream>
 #include "TypeToString.h"
 
-#include "ApiWrapper.h"
+#include "HostAllocator.h"
 
 namespace GpusDoneRight {
 	
@@ -98,7 +98,7 @@ namespace GpusDoneRight {
 		//======================================================================
 
 		template<typename SomeGpuStreamType>
-		void copyToHostAsync(std::vector<ValueType>& hostVector,
+		void copyToHostAsync(std::vector<ValueType,HostAllocator<ValueType> >& hostVector,
 							 SomeGpuStreamType& hstream,
 							 size_t offsetHostInUnits = 0,
 							 int extent = -1) const

@@ -18,13 +18,14 @@ typedef GpusDoneRight::GpuFunction<ModuleType> GpuFunctionType;
 
 typedef int FieldType;
 typedef GpusDoneRight::GpuPointer<FieldType> GpuPointerType;
+typedef GpusDoneRight::HostAllocator<FieldType> HostAllocatorType;
+typedef std::vector<FieldType,HostAllocatorType> HostVectorType;
 
-template<typename SomeFieldType>
-std::string verifyResult(const SomeFieldType* a, size_t n, int c)
+std::string verifyResult(const HostVectorType& a, size_t n, int c)
 {
 	for (size_t i = 0; i < n; i++)
         if (a[i] != c)
-			return "FAILED: a["+ ttos(i) + "]=" + ttos(a[i]) + " c=" + 
+		return "FAILED: a["+ ttos(i) + "]=" + ttos(a[i]) + " c=" +
 				ttos(c) + "\n";
     return "PASSED";
 }
@@ -35,31 +36,25 @@ int main(int argc,char *argv[])
 	CudaType cuda;
 	std::string s = cuda.toString();
 	std::cout<<s<<"--------------------\n";
-	
+
 	bool useBlockingSync = false;
 	size_t contextFlag = (useBlockingSync) ? CU_CTX_BLOCKING_SYNC : 0;
 	size_t deviceNumber = 0;
 	ContextType context(cuda.getDevice(deviceNumber),contextFlag);
-	
+
 	size_t n = 16 * 1024 * 1024;       // number of ints in the data set
-	 
+ 
 	// Anything that is less than 4 SM's will be scaled down in terms of workload
 	float multiProcCount = cuda.getAttribute(deviceNumber,CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT);
 	float scale_factor = std::max(4.0f / multiProcCount, 1.0f);
 	n = size_t (n / scale_factor);
 	std::cout<<"> scale_factor = "<<(1.0f/scale_factor)<<"\n";
 	std::cout<<"> array_size   = "<<n<<"\n";
-	
+
 	// Host memory allocation
 	int c = 5;                      // value to which the array will be initialized
-	//FieldType *hosta = 0;
-	//int nbytes = n * sizeof(FieldType);   // number of data bytes
-	//cuMemAllocHost((void**)&hosta, nbytes);
-	//memset(hosta, 255, nbytes);     // set host memory bits to all 1s, for testing correctness
-	typedef GpusDoneRight::HostAllocator<FieldType> HostAllocatorType;
-	std::vector<FieldType,HostAllocatorType> hostA(n,255);
-// 	int x = mlock(&(hostA[0]),hostA.size()*sizeof(FieldType));
-// 	if (x<0) throw std::runtime_error("mlock failed\n");
+
+	HostVectorType hostA(n,255);
 
 	// Device Memory allocation
 	// allocate device memory
@@ -101,7 +96,7 @@ int main(int argc,char *argv[])
 		for (size_t i = 0; i < nStreams; i++) {
 			deviceA.setOffset(i*n/nStreams);
 			//deviceA.copyToHost(a,i*n/nStreams,n/nStreams);
-			deviceA.copyToHostAsync(&(hostA[0]),*(streams[i]),i*n/streams.size(),n/nStreams);
+			deviceA.copyToHostAsync(hostA,*(streams[i]),i*n/streams.size(),n/nStreams);
 		}
 	}
 
@@ -109,7 +104,7 @@ int main(int argc,char *argv[])
 
 	context.synchronize();
 
-	std::cout<<verifyResult(&(hostA[0]),n,c)<<"\n";
+	std::cout<<verifyResult(hostA,n,c)<<"\n";
 
 	for (size_t i = 0; i < streams.size(); i++) delete streams[i];
 }
