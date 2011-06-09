@@ -18,6 +18,7 @@
 #include "TypeToString.h"
 
 #include "HostAllocator.h"
+#include "HostDeviceMappedAllocator.h"
 
 namespace GpusDoneRight {
 	
@@ -35,9 +36,31 @@ namespace GpusDoneRight {
 			CUresult error = cuMemAlloc(&gpuPtr_,allocatedBytes_);
 			ApiWrapper::check("cuMemAlloc",error,verbose_);
 		}
-		
+
 		//======================================================================
 
+		GpuPointer(std::vector<ValueType,HostDeviceMappedAllocator<ValueType> >& v,
+			bool verbose = true) :
+			verbose_(verbose),
+			allocatedBytes_(0),
+			offsetDevice_(0)
+		{
+			ValueType *p = &(v[0]);
+			CUresult error = cuMemHostGetDevicePointer(&gpuPtr_, (void *)p,0);
+			ApiWrapper::check("cuMemHostGetDevicePointer",error,verbose_);
+		}
+
+		//======================================================================
+
+		~GpuPointer()
+		{
+			if (allocatedBytes_==0) return;
+			CUresult error = cuMemFree(gpuPtr_);
+			ApiWrapper::check("cuMemFree",error,verbose_,ApiWrapper::DO_NOT_THROW);
+		}
+
+		//======================================================================
+		
 		size_t allocatedBytes() const {  return allocatedBytes_; }
 
 		//======================================================================
