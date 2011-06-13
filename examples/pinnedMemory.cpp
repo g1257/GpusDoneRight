@@ -25,9 +25,11 @@ typedef GpusDoneRight::GpuPointer<FieldType> GpuPointerType;
 typedef GpusDoneRight::HostDeviceMappedAllocator<FieldType> HostDeviceMappedAllocatorType;
 typedef std::vector<FieldType,HostDeviceMappedAllocatorType> HostDeviceMappedVectorType;
 
-std::string verifyResults(const HostDeviceMappedVectorType& hostA,
-                          const HostDeviceMappedVectorType& hostB,
-                          const HostDeviceMappedVectorType& hostC)
+std::string verifyResults/*(const FieldType* hostA, 
+                          const FieldType* hostB,
+                          const FieldType* hostC,
+                          size_t nelem) */
+(const HostDeviceMappedVectorType& hostA,const HostDeviceMappedVectorType& hostB,const HostDeviceMappedVectorType& hostC)
 {
 	printf("Checking the results...\n");
 	FieldType errorNorm = 0, refNorm = 0;
@@ -37,6 +39,7 @@ std::string verifyResults(const HostDeviceMappedVectorType& hostA,
 		errorNorm += diff*diff;
 		refNorm += ref*ref;
 	}
+	std::cerr<<"errorNorm="<<errorNorm<<" refNorm="<<refNorm<<"\n";
 	errorNorm = (FieldType)sqrt((FieldType)errorNorm);
 	refNorm = (FieldType)sqrt((FieldType)refNorm);
 	return (errorNorm/refNorm < 1.e-6f) ? "PASSED" : "FAILED";
@@ -47,7 +50,7 @@ int main(int argc, char *argv[])
 	CudaType cuda;
 
 	size_t deviceNumber = 0;
-	ContextType context(cuda.getDevice(deviceNumber),CU_CTX_MAP_HOST); // cutilSafeCall(cudaSetDeviceFlags(cudaDeviceMapHost));
+	ContextType context(cuda.getDevice(deviceNumber),CU_CTX_SCHED_AUTO | CU_CTX_MAP_HOST); // cutilSafeCall(cudaSetDeviceFlags(cudaDeviceMapHost));
 
 	/* Verify the selected device supports mapped memory and set the device
 		flags for mapping host memory. */
@@ -62,13 +65,13 @@ int main(int argc, char *argv[])
 	HostDeviceMappedVectorType hostC(nelem);
 
 	/* Initialize the vectors. */
-	Random48Type random48;
-	random48.seed(34983917);
-	for (size_t i = 0; i < hostA.size(); i++) {
-		hostA[i] = random48.random();
-		hostB[i] = random48.random();
+	Random48Type::seed(349837);
+	for (size_t i = 0; i < nelem; i++) {
+		hostA[i] = static_cast<FieldType>(Random48Type::random());
+		hostB[i] = static_cast<FieldType>(Random48Type::random()); 
 	}
-
+	
+	
 	/* Get the device pointers for the pinned CPU memory mapped into the GPU
 		memory space. */
 	GpuPointerType deviceA(hostA);
@@ -82,14 +85,15 @@ int main(int argc, char *argv[])
 	GpuFunctionType addTwoVectors(module,"addTwoVectors");
 	addTwoVectors.passArguments(deviceA,deviceB,deviceC,nelem);
 	size_t threadsPerBlock = 256;
-	size_t gridx = (unsigned int)ceil(nelem/(float)threadsPerBlock);
-	addTwoVectors.setBlockShape(threadsPerBlock, gridx, 1);
+	//size_t gridx = (unsigned int)ceil(nelem/(float)threadsPerBlock);
+	addTwoVectors.setBlockShape(threadsPerBlock, 1,1);
 	
 	// Kernel invocation
 	size_t blocksPerGrid = (nelem + threadsPerBlock - 1) / threadsPerBlock;
 	addTwoVectors.launchGrid(blocksPerGrid, 1);
 
-  	//cutilSafeCall(cudaThreadSynchronize());
+	//Synchronize is very important!!!
+  	context.synchronize();
 
 	std::cout<<verifyResults(hostA,hostB,hostC)<<"\n";
 }

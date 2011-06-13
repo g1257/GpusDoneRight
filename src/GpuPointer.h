@@ -45,12 +45,22 @@ namespace GpusDoneRight {
 			allocatedBytes_(0),
 			offsetDevice_(0)
 		{
-			ValueType *p = &(v[0]);
-			CUresult error = cuMemHostGetDevicePointer(&gpuPtr_, (void *)p,0);
+			CUresult error = cuMemHostGetDevicePointer(&gpuPtr_, (void *)&(v[0]),0);
 			ApiWrapper::check("cuMemHostGetDevicePointer",error,verbose_);
 		}
 
 		//======================================================================
+
+		GpuPointer(ValueType* v,bool verbose = true) :
+			verbose_(verbose),
+			allocatedBytes_(0),
+			offsetDevice_(0)
+		{
+			CUresult error = cuMemHostGetDevicePointer(&gpuPtr_, (void *)v,0);
+			ApiWrapper::check("cuMemHostGetDevicePointer",error,verbose_);
+		}
+
+//======================================================================
 
 		~GpuPointer()
 		{
