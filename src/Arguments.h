@@ -35,11 +35,19 @@ namespace GpusDoneRight {
 		}
 
 		//! add one pass function per type below
-		void pass(int x)
+		void pass(size_t x)
 		{
 			ALIGN_UP(offset_, __alignof(x));
  			CUresult error = cuParamSeti(hfunc_, offset_, x);
  			ApiWrapper::check("cuParamSeti",error,verbose_);
+ 			incrementOffset(sizeof(x));
+		}
+
+		void pass(float x)
+		{
+			ALIGN_UP(offset_, __alignof(x));
+			CUresult error = cuParamSetf(hfunc_, offset_, x);
+			ApiWrapper::check("cuParamSetf",error,verbose_);
  			incrementOffset(sizeof(x));
 		}
 

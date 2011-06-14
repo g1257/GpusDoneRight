@@ -66,6 +66,14 @@ namespace GpusDoneRight {
 			argumentsHaveBeenPassed_ = true;
 		}
 
+		// an oddity of cuda, out-of-band passing:
+		template<typename SomeTextureType>
+		void passTexture(SomeTextureType& texture)
+		{
+			CUresult error = cuParamSetTexRef(hfunc_, CU_PARAM_TR_DEFAULT, texture());
+			ApiWrapper::check("cuParamSetTexRef",error,verbose_);
+		}
+
 /* API below probably belongs here: please uncomment as you implement them
 CUresult 	cuFuncGetAttribute (int *pi, CUfunction_attribute attrib, CUfunction hfunc)
  	Returns information about a function.
