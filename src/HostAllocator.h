@@ -22,72 +22,27 @@
 namespace GpusDoneRight {
 	template<typename T> class HostAllocator;
 
-	// specialize for void:
-	template<> class HostAllocator<void> {
+	template<typename T> class HostAllocator : public std::allocator<T> {
+		typedef typename std::allocator<T> BaseType;
 	public:
-		typedef void*       pointer;
-		typedef const void* const_pointer;
-		// reference to void members are impossible.
-		typedef void value_type;
-		template <class U> struct rebind { typedef HostAllocator<U>
-		other; };
-	}; // class HostAllocator
-
-	template<typename T> class HostAllocator {
-	public:
-		typedef size_t    size_type;
-		typedef ptrdiff_t difference_type;
-		typedef T*        pointer;
-		typedef const T*  const_pointer;
-		typedef T&        reference;
-		typedef const T&  const_reference;
-		typedef T         value_type;
 		template <class U> struct rebind { typedef HostAllocator<U>
 		other; };
 
-		HostAllocator() throw() { }
-
-		HostAllocator(const HostAllocator&) throw() { }
-
-		template <class U>
-		HostAllocator(const HostAllocator<U>&) throw() { }
-
-		~HostAllocator() throw() { }
-
-		pointer address(reference x) const { return &x; }
-
-		const_pointer address(const_reference x) const { return &x; }
-
-		pointer allocate(size_type n,void* = 0)
+		typename BaseType::pointer allocate(typename BaseType::size_type n,void* = 0)
 		{
 			if (n>this->max_size()) throw
 					std::runtime_error("Bad allocation\n");
 
-			pointer x = 0;
-			cuMemAllocHost((void**)&x, n*sizeof(T));
+			typename BaseType::pointer x = 0;
+			CUresult error = cuMemAllocHost((void**)&x, n*sizeof(T));
+			ApiWrapper::check("cuMemAllocHost",error,true);
 			return static_cast<T*>(x);
 		}
 
-		void deallocate(pointer p, size_type n)
+		void deallocate(typename BaseType::pointer p, typename BaseType::size_type n)
 		{
-			cuMemFreeHost(p);
-		}
-
-		size_type max_size() const throw()
-		{
-			return size_t(-1) / sizeof(T);
-		}
-
-		void construct(pointer p, const T& val)
-		{
-			//! placement new here!!  no actual allocation happens
-			//! only the constructor is called
-			new(static_cast<void*>(p)) T(val);
-		}
-
-		void destroy(pointer p)
-		{
-			p->~T();
+			CUresult error = cuMemFreeHost(p);
+			ApiWrapper::check("cuMemFreeHost",error,true,ApiWrapper::DO_NOT_THROW);
 		}
 	}; // class HostAllocator
 

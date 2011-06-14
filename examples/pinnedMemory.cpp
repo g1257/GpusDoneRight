@@ -74,16 +74,16 @@ int main(int argc, char *argv[])
 	
 	/* Get the device pointers for the pinned CPU memory mapped into the GPU
 		memory space. */
-	GpuPointerType deviceA(hostA);
-	GpuPointerType deviceB(hostB);
-	GpuPointerType deviceC(hostC);
+	GpuPointerType deviceAmem(hostA);
+	GpuPointerType deviceBmem(hostB);
+	GpuPointerType deviceCmem(hostC);
 
 	/* Call the GPU kernel using the device pointers for the mapped memory. */ 
 	std::cout<<"Adding vectors using mapped CPU memory...\n";
 	ModuleType module("addTwoVectors.ptx");
 
 	GpuFunctionType addTwoVectors(module,"addTwoVectors");
-	addTwoVectors.passArguments(deviceA,deviceB,deviceC,nelem);
+	addTwoVectors.passArguments(deviceAmem,deviceBmem,deviceCmem,nelem);
 	size_t threadsPerBlock = 256;
 	//size_t gridx = (unsigned int)ceil(nelem/(float)threadsPerBlock);
 	addTwoVectors.setBlockShape(threadsPerBlock, 1,1);
