@@ -22,7 +22,7 @@ typedef GpusDoneRight::GpuPointer<FieldType> GpuPointerType;
 // typedef GpusDoneRight::HostAllocator<FieldType> HostAllocatorType;
 // typedef std::vector<FieldType,HostAllocatorType> HostVectorType;
 
-typedef GpusDoneRight::HostDeviceMappedAllocator<FieldType> HostDeviceMappedAllocatorType;
+typedef GpusDoneRight::HostAllocator<FieldType,CU_MEMHOSTALLOC_DEVICEMAP> HostDeviceMappedAllocatorType;
 typedef std::vector<FieldType,HostDeviceMappedAllocatorType> HostDeviceMappedVectorType;
 
 std::string verifyResults/*(const FieldType* hostA, 

@@ -18,7 +18,6 @@
 #include "TypeToString.h"
 
 #include "HostAllocator.h"
-#include "HostDeviceMappedAllocator.h"
 
 namespace GpusDoneRight {
 	
@@ -39,7 +38,8 @@ namespace GpusDoneRight {
 
 		//======================================================================
 
-		GpuPointer(std::vector<ValueType,HostDeviceMappedAllocator<ValueType> >& v,
+		template<int templateParamFlags>
+		GpuPointer(std::vector<ValueType,HostAllocator<ValueType,templateParamFlags> >& v,
 			bool verbose = true) :
 			verbose_(verbose),
 			allocatedBytes_(0),
@@ -131,7 +131,7 @@ namespace GpusDoneRight {
 		//======================================================================
 
 		template<typename SomeGpuStreamType>
-		void copyToHostAsync(std::vector<ValueType,HostAllocator<ValueType> >& hostVector,
+		void copyToHostAsync(std::vector<ValueType,HostAllocator<ValueType,-1> >& hostVector,
 							 SomeGpuStreamType& hstream,
 							 size_t offsetHostInUnits = 0,
 							 int extent = -1) const
