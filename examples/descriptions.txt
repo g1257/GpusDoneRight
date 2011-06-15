@@ -1,0 +1,33 @@
+#first line of entry contains associated kernel(s)
+#second line contains the arguments for the driver
+#third line is just a description
+[simpleQuery]
+none
+none
+Simple query sample
+
+[addTwoVectors]
+addTwoVectors
+none
+Addition of two std::vectors
+
+[streams]
+streams
+none
+Running multiple GPU streams
+
+[streamsWithEvents]
+streams
+none
+Adds a timer to the streams example
+
+[pinnedMemory]
+addTwoVectors
+none
+Uses getdeviceptr call to get address
+of pinned memory
+
+[texture]
+texture
+lena_bw 512 512
+simple texture (image) rotation

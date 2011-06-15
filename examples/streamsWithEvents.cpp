@@ -19,7 +19,7 @@ typedef GpusDoneRight::GpuTimer<> GpuTimerType;
 
 typedef int FieldType;
 typedef GpusDoneRight::GpuPointer<FieldType> GpuPointerType;
-typedef GpusDoneRight::HostAllocator<FieldType> HostAllocatorType;
+typedef GpusDoneRight::HostAllocator<FieldType,-1> HostAllocatorType;
 typedef std::vector<FieldType,HostAllocatorType> HostVectorType;
 
 std::string verifyResult(const HostVectorType& a, size_t n, int c)
