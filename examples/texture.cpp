@@ -19,8 +19,25 @@ typedef GpusDoneRight::GpuPointer<FieldType> GpuPointerType;
 typedef GpusDoneRight::Image<FieldType> ImageType;
 typedef GpusDoneRight::Texture<FieldType> TextureType;
 
+std::string verifyResult(const char *f1,const char* f2)
+{
+	std::ifstream if1(f1),if2(f2);
+	char c1,c2;
+	size_t counter = 0;
+	while(!if1.eof() && !if2.eof()) {
+		if1.get(c1);
+		if2.get(c2);
+		if (c1!=c2) counter++;
+	}
+	if1.close();
+	if2.close();
+	std::cout<<"Differences="<<counter<<"\n";
+	return (counter<=8) ? "PASSED" : "FAILED";
+}
+
 int main(int argc, char *argv[])
 {
+	const char refImage[] = "ref_rotated.pgm";
 	CudaType cuda;
 
 	size_t deviceNumber = 0;
@@ -79,4 +96,5 @@ int main(int argc, char *argv[])
 	// write result to file
 	std::string filenameOutput = rootname + "_out.pgm";
 	GpusDoneRight::writeImageToFile(filenameOutput,result,width,height);
+	std::cout<<verifyResult(filenameOutput.c_str(),refImage)<<"\n";
 }
