@@ -24,14 +24,13 @@ namespace GpusDoneRight {
 
 	template<typename FieldType>
 	class Texture {
-		typedef CudaArray CudaArrayType;
 	public:
-		template<typename ModuleType,typename ImageType>
+		template<typename ModuleType,typename CudaArrayType>
 		Texture(
 		        const ModuleType& module,
 		        const std::string& name,
-		        const ImageType& image,
-		        bool verbose = true) : verbose_(verbose),array_(image)
+		        const CudaArrayType& array,
+		        bool verbose = true) : verbose_(verbose)
 		{
 			// We don't really "construct" a texture, we just
 			// get a reference from the kernel module to the texture
@@ -39,7 +38,7 @@ namespace GpusDoneRight {
 			module.getTexRef(&texref_,name.c_str());
 			
 			// Set the array:
-			CUresult error = cuTexRefSetArray(texref_, array_(), CU_TRSA_OVERRIDE_FORMAT);
+			CUresult error = cuTexRefSetArray(texref_, array(), CU_TRSA_OVERRIDE_FORMAT);
 			ApiWrapper::check("cuTexRefSetArray",error,verbose_);
 
 			// other misc. settings:
@@ -99,7 +98,6 @@ CUresult 	cuTexRefSetFormat (CUtexref hTexRef, CUarray_format fmt, int NumPacked
 	private:
 		bool verbose_;
 		CUtexref texref_; // we own this
-		CudaArrayType array_;
 	}; // class Texture
 } // end namespace GpusDoneRight
 

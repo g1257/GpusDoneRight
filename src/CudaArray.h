@@ -35,7 +35,6 @@ namespace GpusDoneRight {
 			CUresult error = cuArrayCreate(&array_, &desc_);
 			ApiWrapper::check("cuArrayCreate",error,verbose_);
 
-			CUDA_MEMCPY2D copyParam;
 			memset(&copyParam, 0, sizeof(copyParam));
 			copyParam.dstMemoryType = CU_MEMORYTYPE_ARRAY;
 			copyParam.dstArray = array_;
@@ -58,7 +57,7 @@ namespace GpusDoneRight {
 			
 		}
 
-		CUarray operator()() { return array_; }
+		CUarray operator()() const { return array_; }
 
 		// When adding function to this class, please uncomment or delete from
 		// the list below:
@@ -72,6 +71,7 @@ CUresult 	cuArrayGetDescriptor (CUDA_ARRAY_DESCRIPTOR *pArrayDescriptor, CUarray
 
 	private:
 		bool verbose_;
+		CUDA_MEMCPY2D copyParam;
 		CUDA_ARRAY_DESCRIPTOR desc_;
 		CUarray array_;
 	}; // class CudaArray

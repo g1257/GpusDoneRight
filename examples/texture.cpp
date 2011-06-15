@@ -12,6 +12,7 @@ typedef GpusDoneRight::Cuda<DeviceType> CudaType;
 typedef GpusDoneRight::Context ContextType;
 typedef GpusDoneRight::Module ModuleType;
 typedef GpusDoneRight::GpuFunction<ModuleType> GpuFunctionType;
+typedef GpusDoneRight::CudaArray CudaArrayType;
 
 typedef float FieldType;
 typedef GpusDoneRight::GpuPointer<FieldType> GpuPointerType;
@@ -36,15 +37,18 @@ int main(int argc, char *argv[])
 	size_t height = atoi(argv[3]);
 	FieldType theta = 0.5;    // angle to rotate image by (in radians)
 	ImageType inputImage(filenameInput,width,height);
+	
+	// Set array for texture
+	CudaArrayType array(inputImage);
 
 	// Allocate device memory for result:
 	GpuPointerType dData(width*height);
 
 	/* Call the GPU kernel */ 
-	ModuleType module("transformKernel.ptx");
+	ModuleType module("texture.ptx");
 	
 	// Set texture parameters
-	TextureType texture(module,"tex",inputImage);
+	TextureType texture(module,"tex",array);
 
 	GpuFunctionType transformKernel(module,"transformKernel");
 	transformKernel.passArguments(dData,width,height,theta);
@@ -53,7 +57,7 @@ int main(int argc, char *argv[])
 	// CUDA **is** ugly:
 	transformKernel.passTexture(texture);
 
-	size_t threadsPerBlock = 8;
+	size_t threadsPerBlock = 4;
 	transformKernel.setBlockShape(threadsPerBlock, threadsPerBlock,1);
 	
 	// Kernel invocation: warmup
@@ -73,7 +77,6 @@ int main(int argc, char *argv[])
 	dData.copyToHost(result);
 
 	// write result to file
-	ImageType outputImage(result,width,height);
 	std::string filenameOutput = rootname + "_out.pgm";
-	outputImage.writeToFile(filenameOutput);
+	GpusDoneRight::writeImageToFile(filenameOutput,result,width,height);
 }
