@@ -98,3 +98,4 @@ int main(int argc, char *argv[])
 	GpusDoneRight::writeImageToFile(filenameOutput,result,width,height);
 	std::cout<<verifyResult(filenameOutput.c_str(),refImage)<<"\n";
 }
+

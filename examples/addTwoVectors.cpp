@@ -41,8 +41,7 @@ int main(int argc,char *argv[])
 	// Host memory allocation
 	size_t n = 10000;
 	std::vector<RealType> hostA(n),hostB(n);
-	PsimagLite::Random48<RealType> random48;
-	random48.seed(33483);
+	PsimagLite::Random48<RealType> random48(33483);
 	PsimagLite::randomizeVector(hostA,0.0,1.0,random48);
 	PsimagLite::randomizeVector(hostB,0.0,1.0,random48);
 

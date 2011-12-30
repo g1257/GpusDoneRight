@@ -65,10 +65,10 @@ int main(int argc, char *argv[])
 	HostDeviceMappedVectorType hostC(nelem);
 
 	/* Initialize the vectors. */
-	Random48Type::seed(349837);
+	Random48Type rng(349837);
 	for (size_t i = 0; i < nelem; i++) {
-		hostA[i] = static_cast<FieldType>(Random48Type::random());
-		hostB[i] = static_cast<FieldType>(Random48Type::random()); 
+		hostA[i] = static_cast<FieldType>(rng());
+		hostB[i] = static_cast<FieldType>(rng());
 	}
 	
 	
